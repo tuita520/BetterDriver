@@ -8,24 +8,35 @@ namespace BetterDriver
 {
     public class BadBuilderUseException : Exception
     {
-
+        private string message;
+        public BadBuilderUseException(string m) => message = m;
+        public override string Message => message;
     }
 
     public abstract class BehaviorTreeBuilder<TContext, TBuilder>
         where TBuilder : BehaviorTreeBuilder<TContext, TBuilder>
     {
+        protected class BuilderNode
+        {
+            public BuilderNode(Behavior b) { behavior = b; }
+            public Behavior behavior { get; private set; }
+            public BuilderNode Parent = null;
+            public List<BuilderNode> Children = new List<BuilderNode>();
+        }
+
         protected abstract TBuilder BuilderInstance { get; }
         protected BehaviorTree<TContext> result = new BehaviorTree<TContext>();
-        protected TContext context;
-        protected Behavior previousNode;
-        public BehaviorTree<TContext> End() { return result; }
+        protected BuilderNode currentNode;
+
+        public BehaviorTree<TContext> Build() { return result; }
 
         public TBuilder Root()
         {
             var root = new RootDecorator();
-            result.nodes.Add(root);
+            currentNode = new BuilderNode(root);
+            currentNode.Parent = null;
+            result.AddBehavior(root);
             result.root = root;
-            previousNode = root;
             return BuilderInstance;
         }
         public TBuilder Selector()
@@ -48,87 +59,87 @@ namespace BetterDriver
             AddBranch(new RepeatDecorator(times));
             return BuilderInstance;
         }
-        public TBuilder MockAction()
+        public TBuilder Action(Action a)
         {
-            AddLeaf(new MockAction());
+            AddLeaf(a);
             return BuilderInstance;
         }
-        public TBuilder Parent()
+        public TBuilder Condition(Condition c)
         {
-            previousNode = previousNode.Parent;
-            while (previousNode is Decorator dec)
+            AddLeaf(c);
+            return BuilderInstance;
+        }
+        public TBuilder End()
+        {
+            currentNode = currentNode.Parent;
+            while (currentNode.behavior is Decorator dec)
             {
-                if (previousNode is RootDecorator) throw new BadBuilderUseException();
-                previousNode = previousNode.Parent;
+                if (currentNode.Parent == null) throw new BadBuilderUseException("Builder reached root! Please check your syntax!");
+                currentNode = currentNode.Parent;
             }
             return BuilderInstance;
         }
 
         protected void AddBranch(Behavior e)
         {
-            if (previousNode is Filter fil)
+            var newNode = new BuilderNode(e);
+            newNode.Parent = currentNode;
+            currentNode.Children.Add(newNode);
+            if (currentNode.behavior is Filter fil)
             {
                 fil.AddAction(e);
-                result.nodes.Add(e);
-                previousNode = e;
             }
-            else if (previousNode is Decorator dec)
+            else if (currentNode.behavior is Decorator dec)
             {
                 dec.SetChild(e);
-                result.nodes.Add(e);
-                previousNode = e;
             }
-            else if (previousNode is Selector sel)
+            else if (currentNode.behavior is Selector sel)
             {
                 sel.AddChild(e);
-                result.nodes.Add(e);
-                previousNode = e;
             }
-            else if (previousNode is Sequence seq)
+            else if (currentNode.behavior is Sequence seq)
             {
                 seq.AddChild(e);
-                result.nodes.Add(e);
-                previousNode = e;
             }
             else
             {
-                throw new BadBuilderUseException();
+                throw new BadBuilderUseException($"Cannot add branch to node of type {e.GetType()}.");
             }
+            currentNode = newNode;
+            result.AddBehavior(e);
         }
         protected void AddLeaf(Behavior e)
         {
-            if (previousNode is Filter fil)
+            if (currentNode.behavior is Filter fil)
             {
                 if (e is Action) fil.AddAction(e);
                 else if (e is Condition) fil.AddCondition(e);
-                else throw new BadBuilderUseException();
-                result.nodes.Add(e);
+                else throw new BadBuilderUseException($"Cannot add behavior of type {e.GetType()} to filter.");
             }
-            else if (previousNode is Decorator dec)
+            else if (currentNode.behavior is Decorator dec)
             {
                 dec.SetChild(e);
-                Parent();
-                result.nodes.Add(e);
+                End();
             }
-            else if (previousNode is Selector sel)
+            else if (currentNode.behavior is Selector sel)
             {
                 sel.AddChild(e);
-                result.nodes.Add(e);
             }
-            else if (previousNode is Sequence seq)
+            else if (currentNode.behavior is Sequence seq)
             {
                 seq.AddChild(e);
-                result.nodes.Add(e);
             }
             else
             {
-                throw new BadBuilderUseException();
+                throw new BadBuilderUseException($"Cannot add leaf to node of type {e.GetType()}.");
             }
+            result.AddBehavior(e);
         }
     }
 
     public class NpcBehaviorBuilder : BehaviorTreeBuilder<Npc, NpcBehaviorBuilder>
     {
+        protected Npc context;
         protected override NpcBehaviorBuilder BuilderInstance => this;
         public NpcBehaviorBuilder (Npc t) { context = t; }
         public NpcBehaviorBuilder CastSkillAction(string n)
@@ -154,9 +165,9 @@ namespace BetterDriver
             foreach (string skill in skills)
             {
                 Filter();
-                CanCastSkillCondition(skill);
-                CastSkillAction(skill);
-                Parent();
+                    CanCastSkillCondition(skill);
+                    CastSkillAction(skill);
+                    End();
             }
             return this;
         }

@@ -38,10 +38,10 @@ namespace BetterDriver
                                 .IsInFightCondition()
                                 .Selector()
                                     .CastFilters(list)
-                                .Parent()
-                            .Parent()
-                        .MockAction()
-                    .End();
+                                .End()
+                            .End()
+                        .Action(FakeSuccessAction.Instance)
+                    .Build();
             }
         }
 
