@@ -12,10 +12,10 @@ namespace BetterDriver
         private Npc caster;
         private string skill;
         public NpcCastSkillAction(Npc t, string n) { caster = t; skill = n;  }
-        public override BehaviorStatus Step(float dt)
+        public override void Step(float dt)
         {
             caster.CastSkill(skill, caster.FightBody?.Target, 0);
-            return BehaviorStatus.SUCCESS;
+            Status = BehaviorStatus.SUCCESS;
         }
     }
 
@@ -25,15 +25,15 @@ namespace BetterDriver
         private string skill;
         public NpcCanCastSkillCondition(Npc t, string n) { caster = t; skill = n; }
 
-        public override BehaviorStatus Step(float dt)
+        public override void Step(float dt)
         {
             if (caster?.FightBody?.Casting?.Skill != skill && caster?.FightBody?.CheckSkillCast(skill) == true)
             {
-                return BehaviorStatus.SUCCESS;
+                Status = BehaviorStatus.SUCCESS;
             }
             else
             {
-                return BehaviorStatus.FAILURE;
+                Status = BehaviorStatus.FAILURE;
             }
         }
     }
@@ -42,15 +42,15 @@ namespace BetterDriver
     {
         private Npc caster;
         public NpcIsInFightCondition(Npc t) { caster = t; }
-        public override BehaviorStatus Step(float dt)
+        public override void Step(float dt)
         {
             if (caster?.FightBody?.IsFighting == true)
             {
-                return BehaviorStatus.SUCCESS;
+                Status = BehaviorStatus.SUCCESS;
             }
             else
             {
-                return BehaviorStatus.FAILURE;
+                Status = BehaviorStatus.FAILURE;
             }
         }
     }

@@ -16,13 +16,13 @@ namespace BetterDriver
         protected Queue<ISchedulable> firstQueue = new Queue<ISchedulable>();
         protected Queue<ISchedulable> secondQueue = new Queue<ISchedulable>();
         protected bool CurrentIsFirst = true;
-        protected Dictionary<Guid, Action<IScheduler, BehaviorStatus>> callBacks = new Dictionary<Guid, Action<IScheduler, BehaviorStatus>>();
+        protected Dictionary<Guid, Action<IScheduler, BehaviorStatus>> onCompleted = new Dictionary<Guid, Action<IScheduler, BehaviorStatus>>();
 
         public Behavior root;
         public void AddBehavior(Behavior b) { behaviors.Add(b); }
         public void PostSchedule(ISchedulable s) { if (CurrentIsFirst) secondQueue.Enqueue(s); else firstQueue.Enqueue(s); }
-        public void PostCallBack(ISchedulable schedule, Action<IScheduler, BehaviorStatus> cb) { callBacks[schedule.ID] = cb; }
-        public void Terminate(ISchedulable schedule, BehaviorStatus status) { callBacks.TryInvoke(schedule, this, status); }
+        public void PostCallBack(ISchedulable schedule, Action<IScheduler, BehaviorStatus> cb) { onCompleted[schedule.ID] = cb; }
+        public void Terminate(ISchedulable schedule, BehaviorStatus status) { onCompleted.TryInvoke(schedule, this, status); }
         public void Enter () { root.Setup(this); }
         public void Leave (BehaviorStatus status) {  }
         public bool Step(float dt)
@@ -32,9 +32,10 @@ namespace BetterDriver
                 while (firstQueue.Count > 0)
                 {
                     var currentBehavior = firstQueue.Dequeue() as Behavior;
-                    var s = currentBehavior.Step(dt);
+                    currentBehavior.Step(dt);
+                    var s = currentBehavior.Status;
                     if (s == BehaviorStatus.RUNNING) PostSchedule(currentBehavior);
-                    else callBacks.TryInvoke(currentBehavior, this, s);
+                    else onCompleted.TryInvoke(currentBehavior, this, s);
                 }
                 
             }
@@ -43,9 +44,10 @@ namespace BetterDriver
                 while (secondQueue.Count > 0)
                 {
                     var currentBehavior = secondQueue.Dequeue() as Behavior;
-                    var s = currentBehavior.Step(dt);
+                    currentBehavior.Step(dt);
+                    var s = currentBehavior.Status;
                     if (s == BehaviorStatus.RUNNING) PostSchedule(currentBehavior);
-                    else callBacks.TryInvoke(currentBehavior, this, s);
+                    else onCompleted.TryInvoke(currentBehavior, this, s);
                 }
             }
             CurrentIsFirst = !CurrentIsFirst;
