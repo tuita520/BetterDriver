@@ -14,57 +14,43 @@ namespace BetterDriver
         ABORTED
     }
     //base class.
-    public abstract class Behavior
+    public abstract class Behavior : IUpdatable, ISchedulable
     {
-        public abstract void Enter();
+        protected Guid _guid = Guid.NewGuid();
+        public Guid ID
+        {
+            get { return _guid; }
+        }
         public abstract BehaviorStatus Step(float dt);
-        public abstract void Leave(BehaviorStatus status);
-    }
-    //interfaces.
-    public interface IComposable
-    {
-        void AddChild(Behavior c);
-        void RemoveChild(Behavior c);
-        void ClearChildren();
+        public abstract void Setup(IScheduler scheduler);
     }
     // fake objects.
     public class FakeSuccessAction : Action
     {
-        public static readonly FakeSuccessAction Instance = new FakeSuccessAction();
-        public override void Enter() { }
-        public override void Leave(BehaviorStatus status) { }
         public override BehaviorStatus Step(float dt) { return BehaviorStatus.SUCCESS; }
     }
     public class FakeFailureAction : Action
     {
-        public static readonly FakeFailureAction Instance = new FakeFailureAction();
-        public override void Enter() { }
-        public override void Leave(BehaviorStatus status) { }
         public override BehaviorStatus Step(float dt) { return BehaviorStatus.FAILURE; }
     }
     public class AlwaysTrueCondition : Condition
     {
-        public static readonly AlwaysTrueCondition Instance = new AlwaysTrueCondition();
-        public override void Enter() { }
-        public override void Leave(BehaviorStatus status) { }
         public override BehaviorStatus Step(float dt) { return BehaviorStatus.SUCCESS; }
     }
     public class AlwaysFalseCondition : Condition
     {
-        public static readonly AlwaysFalseCondition Instance = new AlwaysFalseCondition();
-        public override void Enter() { }
-        public override void Leave(BehaviorStatus status) { }
         public override BehaviorStatus Step(float dt) { return BehaviorStatus.FAILURE; }
     }
 
     // leaf nodes.
     public abstract class Action : Behavior
     {
-        
+        public override void Setup(IScheduler scheduler) { }
     }
     public abstract class Condition : Behavior
     {
-        
+        public override void Setup(IScheduler scheduler) { }
+
     }
 
     //branch nodes.
@@ -72,36 +58,61 @@ namespace BetterDriver
     {
         protected Behavior Child;
         public void SetChild (Behavior child) { Child = child; }
-        public override void Enter() { if (Child == null) SetChild(FakeSuccessAction.Instance); Child.Enter(); }
-        public override void Leave(BehaviorStatus status) { Child.Leave(status); }
+        public override BehaviorStatus Step(float dt) { return BehaviorStatus.SUSPENDED; }
+        public override void Setup(IScheduler scheduler)
+        {
+            if (Child == null) SetChild(new FakeSuccessAction());
+            scheduler.PostSchedule(Child);
+            scheduler.PostCallBack(Child, OnComplete);
+            Child.Setup(scheduler);
+        }
+        protected abstract void OnComplete(IScheduler scheduler, BehaviorStatus status);
     }
 
     public abstract class Composite : Behavior, IComposable
     {
         protected int CurrentIndex;
         protected List<Behavior> Children = new List<Behavior>();
-        public override void Enter() { CurrentIndex = 0; if (Children.Count == 0) Children.Add(FakeSuccessAction.Instance); Children[CurrentIndex].Enter(); }
         public void AddChild(Behavior child) { Children.Add(child); }
         public void RemoveChild(Behavior child) { Children.Remove(child); }
         public void ClearChildren() { Children.Clear(); }
+        public override BehaviorStatus Step(float dt) { return BehaviorStatus.SUSPENDED; }
+        public override void Setup(IScheduler scheduler)
+        {
+            CurrentIndex = 0;
+            if (Children.Count == 0) Children.Add(new FakeSuccessAction());
+            var child = Children[CurrentIndex];
+            scheduler.PostSchedule(child);
+            scheduler.PostCallBack(child, OnComplete);
+            child.Setup(scheduler);
+        }
+        protected abstract void OnComplete(IScheduler scheduler, BehaviorStatus status);
     }
 
+    // concrete branches.
     public class Sequence : Composite
     {
-        public override BehaviorStatus Step(float dt)
+        protected override void OnComplete(IScheduler scheduler, BehaviorStatus status)
         {
-            while (true)
+            if (status == BehaviorStatus.FAILURE)
             {
-                var cur_child = Children[CurrentIndex];
-                var s = cur_child.Step(dt);
-                if (s == BehaviorStatus.FAILURE) cur_child.Leave(BehaviorStatus.FAILURE);
-                if (s != BehaviorStatus.SUCCESS) return s;
-                cur_child.Leave(BehaviorStatus.SUCCESS);
-                if (++CurrentIndex >= Children.Count) return BehaviorStatus.SUCCESS;
-                Children[CurrentIndex].Enter();
+                scheduler.Terminate(this, status);
+            }
+            else
+            {
+                if (++CurrentIndex >= Children.Count)
+                {
+                    scheduler.Terminate(this, BehaviorStatus.SUCCESS);
+                }
+                else
+                {
+                    var child = Children[CurrentIndex];
+                    scheduler.PostSchedule(child);
+                    scheduler.PostCallBack(child, OnComplete);
+                    child.Setup(scheduler);
+                }
             }
         }
-        public override void Leave(BehaviorStatus status) { }
     }
     public class Filter : Sequence
     {
@@ -111,30 +122,37 @@ namespace BetterDriver
 
     public class Selector : Composite
     {
-        public override BehaviorStatus Step(float dt)
+        protected override void OnComplete(IScheduler scheduler, BehaviorStatus status)
         {
-            while (true)
+            if (status == BehaviorStatus.SUCCESS)
             {
-                var cur_child = Children[CurrentIndex];
-                var s = cur_child.Step(dt);
-                if (s == BehaviorStatus.SUCCESS) cur_child.Leave(BehaviorStatus.SUCCESS);
-                if (s != BehaviorStatus.FAILURE) return s;
-                cur_child.Leave(BehaviorStatus.FAILURE);
-                if (++CurrentIndex >= Children.Count) return BehaviorStatus.FAILURE;
-                Children[CurrentIndex].Enter();
+                scheduler.Terminate(this, status);
+            }
+            else
+            {
+                if (++CurrentIndex >= Children.Count)
+                {
+                    scheduler.Terminate(this, BehaviorStatus.FAILURE);
+                }
+                else
+                {
+                    var child = Children[CurrentIndex];
+                    scheduler.PostSchedule(child);
+                    scheduler.PostCallBack(child, OnComplete);
+                    child.Setup(scheduler);
+                }
             }
         }
-        public override void Leave(BehaviorStatus status) { }
     }
 
     // it will reset its child once it finishes. Always return running status.
     public class RootDecorator : Decorator
     {
-        public override BehaviorStatus Step(float dt)
+        protected override void OnComplete(IScheduler scheduler, BehaviorStatus status)
         {
-            var s = Child.Step(dt);
-            if (s != BehaviorStatus.RUNNING) Child.Enter();
-            return BehaviorStatus.RUNNING;
+            scheduler.PostSchedule(Child);
+            scheduler.PostCallBack(Child, OnComplete);
+            Child.Setup(scheduler);
         }
     }
     public class RepeatDecorator : Decorator
@@ -142,20 +160,24 @@ namespace BetterDriver
         protected readonly int times;
         protected int counter;
         public RepeatDecorator(int t) { times = t; }
-        public override void Enter()
+        public override void Setup(IScheduler scheduler)
         {
             counter = 0;
-            base.Enter();
+            base.Setup(scheduler);
         }
-        public override BehaviorStatus Step(float dt)
+        protected override void OnComplete(IScheduler scheduler, BehaviorStatus status)
         {
-            while (true)
+            if (status == BehaviorStatus.SUCCESS)
             {
-                var s = Child.Step(dt);
-                if (s != BehaviorStatus.SUCCESS) return s;
-                if (++counter >= times) return BehaviorStatus.SUCCESS;
-                Child.Enter();
+                if (++counter < times)
+                {
+                    scheduler.PostSchedule(Child);
+                    scheduler.PostCallBack(Child, OnComplete);
+                    Child.Setup(scheduler);
+                }
+                else scheduler.Terminate(this, BehaviorStatus.SUCCESS);
             }
+            else scheduler.Terminate(this, BehaviorStatus.FAILURE);
         }
     }
     

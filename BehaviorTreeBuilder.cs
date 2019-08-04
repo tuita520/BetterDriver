@@ -13,8 +13,8 @@ namespace BetterDriver
         public override string Message => message;
     }
 
-    public abstract class BehaviorTreeBuilder<TContext, TBuilder>
-        where TBuilder : BehaviorTreeBuilder<TContext, TBuilder>
+    public abstract class BehaviorTreeBuilder<TBuilder>
+        where TBuilder : BehaviorTreeBuilder<TBuilder>
     {
         protected class BuilderNode
         {
@@ -25,10 +25,10 @@ namespace BetterDriver
         }
 
         protected abstract TBuilder BuilderInstance { get; }
-        protected BehaviorTree<TContext> result = new BehaviorTree<TContext>();
+        protected BehaviorTree result = new BehaviorTree();
         protected BuilderNode currentNode;
 
-        public BehaviorTree<TContext> Build() { return result; }
+        public BehaviorTree Build() { return result; }
 
         public TBuilder Root()
         {
@@ -137,7 +137,7 @@ namespace BetterDriver
         }
     }
 
-    public class NpcBehaviorBuilder : BehaviorTreeBuilder<Npc, NpcBehaviorBuilder>
+    public class NpcBehaviorBuilder : BehaviorTreeBuilder<NpcBehaviorBuilder>
     {
         protected Npc context;
         protected override NpcBehaviorBuilder BuilderInstance => this;

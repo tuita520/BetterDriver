@@ -57,6 +57,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Interfaces.cs" />
     <Compile Include="NpcBehaviors.cs" />
     <Compile Include="BehaviorNode.cs" />
     <Compile Include="BehaviorTree.cs" />

@@ -9,7 +9,7 @@ namespace BetterDriver
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     public class NpcDriver : ThingStep<Npc>
     {
-        private BehaviorTree<Npc> tree;
+        private BehaviorTree tree;
         public override void OnAfterLoad(Npc t)
         {
             OnEnter(t);
@@ -40,7 +40,7 @@ namespace BetterDriver
                                     .CastFilters(list)
                                 .End()
                             .End()
-                        .Action(FakeSuccessAction.Instance)
+                        .Action(new FakeSuccessAction())
                     .Build();
             }
         }
