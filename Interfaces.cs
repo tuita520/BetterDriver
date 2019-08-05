@@ -10,18 +10,15 @@ namespace BetterDriver
         T Get<T>(string key);
         void Post<T>(string key, T value);
     }
-    public interface IUpdatable
-    {
-        BehaviorStatus Status { get; }
-        void Step(IBlackBoard bb, float dt);
-        void Abort();
-        void Clear();
-    }
     public interface ISchedulable
     {
         Guid ID { get; }
-        void Setup(IScheduler scheduler);
+        BehaviorStatus Status { get; }
+        void Init(IScheduler scheduler);
         void OnCompleted(IScheduler scheduler, BehaviorStatus status);
+        void Step(IBlackBoard bb, float dt);
+        void Abort();
+        void Clear();
     }
     public interface IScheduler
     {

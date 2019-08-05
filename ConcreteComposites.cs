@@ -20,7 +20,7 @@ namespace BetterDriver
                     var child = Children[CurrentIndex];
                     scheduler.PostSchedule(child);
                     scheduler.PostCallBack(child, OnCompleted);
-                    child.Setup(scheduler);
+                    child.Init(scheduler);
                 }
             }
             else
@@ -53,7 +53,7 @@ namespace BetterDriver
                     var child = Children[CurrentIndex];
                     scheduler.PostSchedule(child);
                     scheduler.PostCallBack(child, OnCompleted);
-                    child.Setup(scheduler);
+                    child.Init(scheduler);
                 }
             }
         }

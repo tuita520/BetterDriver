@@ -14,7 +14,7 @@ namespace BetterDriver
         ABORTED
     }
     //base class.
-    public abstract class Behavior : IUpdatable, ISchedulable
+    public abstract class Behavior : ISchedulable
     {
         private Guid _guid = Guid.NewGuid();
         private BehaviorStatus _status = BehaviorStatus.SUSPENDED;
@@ -30,19 +30,19 @@ namespace BetterDriver
         public virtual void Abort() { _status = BehaviorStatus.ABORTED; }
         public void Clear() { _status = BehaviorStatus.SUSPENDED; }
         public abstract void Step(IBlackBoard bb, float dt);
-        public abstract void Setup(IScheduler scheduler);
+        public abstract void Init(IScheduler scheduler);
         public abstract void OnCompleted(IScheduler scheduler, BehaviorStatus status);
     }
 
     // leaf nodes.
     public abstract class Action : Behavior
     {
-        public override void Setup(IScheduler scheduler) { Clear(); }
+        public override void Init(IScheduler scheduler) { Clear(); }
         public override void OnCompleted(IScheduler scheduler, BehaviorStatus status) { }
     }
     public abstract class Condition : Behavior
     {
-        public override void Setup(IScheduler scheduler) { Clear(); }
+        public override void Init(IScheduler scheduler) { Clear(); }
         public override void OnCompleted(IScheduler scheduler, BehaviorStatus status) { }
 
     }
@@ -54,13 +54,13 @@ namespace BetterDriver
         public void SetChild(Behavior child) { Child = child; }
         public override void Abort() { base.Abort(); Child.Abort(); }
         public override void Step(IBlackBoard bb, float dt) { Status = BehaviorStatus.SUSPENDED; }
-        public override void Setup(IScheduler scheduler)
+        public override void Init(IScheduler scheduler)
         {
             if (Child == null) SetChild(new FakeSuccessAction());
             Clear();
             scheduler.PostSchedule(Child);
             scheduler.PostCallBack(Child, OnCompleted);
-            Child.Setup(scheduler);
+            Child.Init(scheduler);
         }
     }
 
@@ -80,7 +80,7 @@ namespace BetterDriver
             }
         }
         public override void Step(IBlackBoard bb, float dt) { Status = BehaviorStatus.SUSPENDED; }
-        public override void Setup(IScheduler scheduler)
+        public override void Init(IScheduler scheduler)
         {
             CurrentIndex = 0;
             if (Children.Count == 0) Children.Add(new FakeSuccessAction());
@@ -88,7 +88,7 @@ namespace BetterDriver
             var child = Children[CurrentIndex];
             scheduler.PostSchedule(child);
             scheduler.PostCallBack(child, OnCompleted);
-            child.Setup(scheduler);
+            child.Init(scheduler);
         }
     }
 }

@@ -28,14 +28,14 @@ namespace BetterDriver
         public void PostSchedule(ISchedulable s) { if (CurrentIsFirst) secondQueue.Enqueue(s); else firstQueue.Enqueue(s); }
         public void PostCallBack(ISchedulable schedule, Action<IScheduler, BehaviorStatus> cb) { onCompleted[schedule.ID] = cb; }
         public void Terminate(ISchedulable schedule, BehaviorStatus status) { onCompleted.TryInvoke(schedule, this, status); }
-        public void Enter() { root.Setup(this); Step(0f); }
+        public void Enter() { root.Init(this); Step(0f); }
         public void Leave(BehaviorStatus status) { }
         public void Step(float dt)
         {
             ref var currentQueue = ref getCurrentQueue();
             while (currentQueue.Count > 0)
             {
-                var currentBehavior = currentQueue.Dequeue() as Behavior;
+                var currentBehavior = currentQueue.Dequeue();
                 currentBehavior.Step(this, dt);
                 var s = currentBehavior.Status;
                 if (s == BehaviorStatus.RUNNING) PostSchedule(currentBehavior);
