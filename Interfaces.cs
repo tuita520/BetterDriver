@@ -5,17 +5,17 @@ using System.Text;
 
 namespace BetterDriver
 {
-    public interface IComposable
+    public interface IBlackBoard
     {
-        void AddChild(Behavior c);
-        void RemoveChild(Behavior c);
-        void ClearChildren();
+        T Get<T>(string key);
+        void Post<T>(string key, T value);
     }
     public interface IUpdatable
     {
         BehaviorStatus Status { get; }
-        void Step(float dt);
+        void Step(IBlackBoard bb, float dt);
         void Abort();
+        void Clear();
     }
     public interface ISchedulable
     {

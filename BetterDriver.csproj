@@ -58,9 +58,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlackBoard.cs" />
+    <Compile Include="ConcreteComposites.cs" />
+    <Compile Include="ConcreteDecorators.cs" />
+    <Compile Include="FakeBehaviors.cs" />
     <Compile Include="Interfaces.cs" />
     <Compile Include="NpcBehaviors.cs" />
-    <Compile Include="BehaviorNode.cs" />
+    <Compile Include="BehaviorBase.cs" />
     <Compile Include="BehaviorTree.cs" />
     <Compile Include="BehaviorTreeBuilder.cs" />
     <Compile Include="JsonPatch.cs" />

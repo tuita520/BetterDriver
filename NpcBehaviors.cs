@@ -12,7 +12,7 @@ namespace BetterDriver
         private Npc caster;
         private string skill;
         public NpcCastSkillAction(Npc t, string n) { caster = t; skill = n;  }
-        public override void Step(float dt)
+        public override void Step(IBlackBoard bb, float dt)
         {
             caster.CastSkill(skill, caster.FightBody?.Target, 0);
             Status = BehaviorStatus.SUCCESS;
@@ -25,7 +25,7 @@ namespace BetterDriver
         private string skill;
         public NpcCanCastSkillCondition(Npc t, string n) { caster = t; skill = n; }
 
-        public override void Step(float dt)
+        public override void Step(IBlackBoard bb, float dt)
         {
             if (caster?.FightBody?.Casting?.Skill != skill && caster?.FightBody?.CheckSkillCast(skill) == true)
             {
@@ -42,7 +42,7 @@ namespace BetterDriver
     {
         private Npc caster;
         public NpcIsInFightCondition(Npc t) { caster = t; }
-        public override void Step(float dt)
+        public override void Step(IBlackBoard bb, float dt)
         {
             if (caster?.FightBody?.IsFighting == true)
             {

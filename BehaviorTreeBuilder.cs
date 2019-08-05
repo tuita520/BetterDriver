@@ -72,9 +72,10 @@ namespace BetterDriver
         public TBuilder End()
         {
             currentNode = currentNode.Parent;
+            if (currentNode == null) return BuilderInstance;
             while (currentNode.behavior is Decorator dec)
             {
-                if (currentNode.Parent == null) throw new BadBuilderUseException("Builder reached root! Please check your syntax!");
+                if (currentNode.Parent == null) return BuilderInstance;
                 currentNode = currentNode.Parent;
             }
             return BuilderInstance;
@@ -141,7 +142,7 @@ namespace BetterDriver
     {
         protected Npc context;
         protected override NpcBehaviorBuilder BuilderInstance => this;
-        public NpcBehaviorBuilder (Npc t) { context = t; }
+        public NpcBehaviorBuilder(Npc t) { context = t; }
         public NpcBehaviorBuilder CastSkillAction(string n)
         {
             var act = new NpcCastSkillAction(context, n);
@@ -165,9 +166,9 @@ namespace BetterDriver
             foreach (string skill in skills)
             {
                 Filter();
-                    CanCastSkillCondition(skill);
-                    CastSkillAction(skill);
-                    End();
+                CanCastSkillCondition(skill);
+                CastSkillAction(skill);
+                End();
             }
             return this;
         }
