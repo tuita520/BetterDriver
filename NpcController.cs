@@ -1,22 +1,14 @@
-﻿using XiaWorld;
-using XiaWorld.ThingStep;
-using Newtonsoft.Json;
+﻿using System.Collections.Generic;
 using System.Linq;
+using XiaWorld;
 using XiaWorld.Fight;
 
 namespace BetterDriver
 {
-    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    [System.Obsolete]
-    public class NpcDriver : ThingStep<Npc>
+    public class NpcController
     {
         private BehaviorTree tree;
-        public override void OnAfterLoad(Npc t)
-        {
-            OnEnter(t);
-        }
-
-        public override void OnEnter(Npc t, params object[] objs)
+        public void Enter(Npc t)
         {
             var skills = t?.FightBody?.Skills;
             if (skills != null)
@@ -27,7 +19,7 @@ namespace BetterDriver
                         var def = FightMgr.Instance.GetSkillDef(key);
                         return key != "NormalAttack" && def.Kind != g_emFightSkillKind.Health && def.Kind != g_emFightSkillKind.Sheild;
                     })
-                    .OrderByDescending( key =>
+                    .OrderByDescending(key =>
                     {
                         return FightMgr.Instance.GetSkillDef(key).Kind;
                     });
@@ -44,24 +36,12 @@ namespace BetterDriver
                         .Action(new FakeSuccessAction())
                     .Build();
             }
+            tree?.Enter();
         }
 
-        public override void OnLeave(Npc t, params object[] objs)
+        public void Step(float dt)
         {
-            tree?.Leave(BehaviorStatus.SUCCESS);
-        }
-
-        public override ThingStepRes OnStep(Npc t, float dt)
-        {
-            if (t?.IsDeath == true)
-            {
-                return ThingStepRes.emDestroySelf;
-            }
-            else
-            {
-                tree?.Step(dt);
-                return ThingStepRes.emContinue;
-            }
+            tree?.Step(dt);
         }
     }
 }
