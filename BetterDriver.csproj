@@ -67,7 +67,7 @@
     <Compile Include="BehaviorTree\BehaviorBase.cs" />
     <Compile Include="BehaviorTree\BehaviorTree.cs" />
     <Compile Include="BehaviorTree\BehaviorTreeBuilder.cs" />
-    <Compile Include="BehaviorTree\JsonPatch.cs" />
+    <Compile Include="JsonPatch.cs" />
     <Compile Include="NpcDriver.cs" />
     <Compile Include="NpcHooks.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -14,14 +14,17 @@ namespace BetterDriver
     {
         Guid ID { get; }
         ref readonly NodeStatus Status { get; }
-        void Init(IScheduler scheduler);
-        void OnCompleted(IScheduler scheduler, NodeStatus status);
+        void Enter(IScheduler scheduler);
         void Step(IBlackBoard bb, float dt);
+    }
+    public interface IObserver
+    {
+        void OnCompleted(IScheduler scheduler, NodeStatus status);
     }
     public interface IScheduler
     {
         void PostSchedule(ISchedulable schedule);
-        void PostCallBack(ISchedulable schedule, Action<IScheduler, NodeStatus> cb);
+        void Subscribe(ISchedulable schedule, IObserver ob);
         void Terminate(ISchedulable schedule, NodeStatus status);
     }
     public interface IBehaviorTreeBuilder

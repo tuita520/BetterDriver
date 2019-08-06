@@ -7,7 +7,6 @@ namespace BetterDriver
 {
     public static class Extensions
     {
-        public static void TryInvoke(this Dictionary<Guid, Action<IScheduler, NodeStatus>> d, ISchedulable s, IScheduler c, NodeStatus b) { d.TryGetValue(s.ID, out var ret); ret?.Invoke(c, b); }
         public static T TryGetOrDefault<T>(this Dictionary<string, object> d, string key) => d.TryGetValue(key, out var ret) ? (T)ret : default;
     }
 
@@ -17,7 +16,7 @@ namespace BetterDriver
         protected Queue<ISchedulable> firstQueue = new Queue<ISchedulable>();
         protected Queue<ISchedulable> secondQueue = new Queue<ISchedulable>();
         protected bool CurrentIsFirst = true;
-        protected Dictionary<Guid, Action<IScheduler, NodeStatus>> onCompleted = new Dictionary<Guid, Action<IScheduler, NodeStatus>>();
+        protected Dictionary<Guid, IObserver> onCompleted = new Dictionary<Guid, IObserver>();
         protected Dictionary<string, object> blackBoard = new Dictionary<string, object>();
 
         public Behavior root;
@@ -26,9 +25,9 @@ namespace BetterDriver
 
         public void AddBehavior(Behavior b) { behaviors.Add(b); }
         public void PostSchedule(ISchedulable s) { if (CurrentIsFirst) secondQueue.Enqueue(s); else firstQueue.Enqueue(s); }
-        public void PostCallBack(ISchedulable schedule, Action<IScheduler, NodeStatus> cb) { onCompleted[schedule.ID] = cb; }
-        public void Terminate(ISchedulable schedule, NodeStatus status) { onCompleted.TryInvoke(schedule, this, status); }
-        public void Enter() { root.Init(this); Step(0f); }
+        public void Subscribe(ISchedulable schedule, IObserver ob) { onCompleted[schedule.ID] = ob; }
+        public void Terminate(ISchedulable schedule, NodeStatus status) { onCompleted.TryGetValue(schedule.ID, out var ret); ret?.OnCompleted(this, status); }
+        public void Enter() { root.Enter(this); Step(0f); }
         public void Leave(NodeStatus status) { }
         public void Step(float dt)
         {
@@ -40,8 +39,15 @@ namespace BetterDriver
                 if (s != NodeStatus.ABORTED)
                 {
                     currentNode.Step(this, dt);
-                    if (s == NodeStatus.RUNNING) PostSchedule(currentNode);
-                    else if (s == NodeStatus.SUCCESS || s == NodeStatus.FAILURE) onCompleted.TryInvoke(currentNode, this, s);
+                    if (s == NodeStatus.RUNNING)
+                    {
+                        PostSchedule(currentNode);
+                    }
+                    else if (s == NodeStatus.SUCCESS || s == NodeStatus.FAILURE)
+                    {
+                        onCompleted.TryGetValue(currentNode.ID, out var ret);
+                        ret?.OnCompleted(this, s);
+                    }
                 }
             }
             CurrentIsFirst = !CurrentIsFirst;

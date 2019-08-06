@@ -85,7 +85,7 @@ namespace BetterDriver
             var newNode = new BuilderNode(e);
             newNode.Parent = currentNode;
             currentNode.Children.Add(newNode);
-            result.PostCallBack(e, currentNode.behavior.OnCompleted);
+            result.Subscribe(e, currentNode.behavior);
             if (currentNode.behavior is Filter fil)
             {
                 fil.AddAction(e);
@@ -111,7 +111,7 @@ namespace BetterDriver
         }
         protected void AddLeaf(Behavior e)
         {
-            result.PostCallBack(e, currentNode.behavior.OnCompleted);
+            result.Subscribe(e, currentNode.behavior);
             if (currentNode.behavior is Filter fil)
             {
                 if (e is Action) fil.AddAction(e);
