@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace BetterDriver
 {
@@ -15,8 +13,9 @@ namespace BetterDriver
         }
         public Guid ID { get; }
         public Behavior() => ID = Guid.NewGuid();
-        public virtual void Abort() { status = NodeStatus.ABORTED; }
         public void Clear() { status = NodeStatus.SUSPENDED; }
+        public virtual void Abort() { status = NodeStatus.ABORTED; }
+
         public abstract void Step(float dt);
         public abstract void Enter(IScheduler scheduler);
         public abstract void OnCompleted(IScheduler scheduler, NodeStatus status);

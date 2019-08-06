@@ -10,7 +10,7 @@ namespace BetterDriver
         public static T TryGetOrDefault<T>(this Dictionary<string, object> d, string key) => d.TryGetValue(key, out var ret) ? (T)ret : default;
     }
 
-    public class BehaviorTree : IScheduler, IBlackBoard
+    public class BehaviorTree : IScheduler, IProvider, IBlackBoard
     {
         protected List<Behavior> behaviors = new List<Behavior>();
         protected Queue<ISchedulable> firstQueue = new Queue<ISchedulable>();

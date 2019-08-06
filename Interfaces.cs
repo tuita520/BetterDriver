@@ -10,6 +10,7 @@ namespace BetterDriver
         T Get<T>(string key);
         void Post<T>(string key, T value);
     }
+
     public interface ISchedulable
     {
         Guid ID { get; }
@@ -17,19 +18,18 @@ namespace BetterDriver
         void Enter(IScheduler scheduler);
         void Step(float dt);
     }
+    public interface IScheduler
+    {
+        void PostSchedule(ISchedulable schedule);
+        void Terminate(ISchedulable schedule, NodeStatus status);
+    }
+
     public interface IObserver
     {
         void OnCompleted(IScheduler scheduler, NodeStatus status);
     }
-    public interface IScheduler
+    public interface IProvider
     {
-        void PostSchedule(ISchedulable schedule);
         void Subscribe(ISchedulable schedule, IObserver ob);
-        void Terminate(ISchedulable schedule, NodeStatus status);
-    }
-    public interface IStackable<T>
-    {
-        T Parent { get; }
-        List<T> Children { get; }
     }
 }
