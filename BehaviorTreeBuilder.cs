@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using XiaWorld;
 
 namespace BetterDriver
 {
@@ -13,7 +12,7 @@ namespace BetterDriver
         public override string Message => message;
     }
 
-    public abstract class BehaviorTreeBuilder<TBuilder>
+    public abstract class BehaviorTreeBuilder<TBuilder> : IBehaviorTreeBuilder
         where TBuilder : BehaviorTreeBuilder<TBuilder>
     {
         protected class BuilderNode
@@ -32,7 +31,7 @@ namespace BetterDriver
 
         public TBuilder Root()
         {
-            var root = new RootDecorator();
+            var root = new InfiniteDecorator();
             currentNode = new BuilderNode(root);
             currentNode.Parent = null;
             result.AddBehavior(root);
@@ -86,6 +85,7 @@ namespace BetterDriver
             var newNode = new BuilderNode(e);
             newNode.Parent = currentNode;
             currentNode.Children.Add(newNode);
+            result.PostCallBack(e, currentNode.behavior.OnCompleted);
             if (currentNode.behavior is Filter fil)
             {
                 fil.AddAction(e);
@@ -111,6 +111,7 @@ namespace BetterDriver
         }
         protected void AddLeaf(Behavior e)
         {
+            result.PostCallBack(e, currentNode.behavior.OnCompleted);
             if (currentNode.behavior is Filter fil)
             {
                 if (e is Action) fil.AddAction(e);
@@ -135,42 +136,6 @@ namespace BetterDriver
                 throw new BadBuilderUseException($"Cannot add leaf to node of type {e.GetType()}.");
             }
             result.AddBehavior(e);
-        }
-    }
-
-    public class NpcBehaviorBuilder : BehaviorTreeBuilder<NpcBehaviorBuilder>
-    {
-        protected Npc context;
-        protected override NpcBehaviorBuilder BuilderInstance => this;
-        public NpcBehaviorBuilder(Npc t) { context = t; }
-        public NpcBehaviorBuilder CastSkillAction(string n)
-        {
-            var act = new NpcCastSkillAction(context, n);
-            AddLeaf(act);
-            return this;
-        }
-        public NpcBehaviorBuilder IsInFightCondition()
-        {
-            var cond = new NpcIsInFightCondition(context);
-            AddLeaf(cond);
-            return this;
-        }
-        public NpcBehaviorBuilder CanCastSkillCondition(string n)
-        {
-            var cond = new NpcCanCastSkillCondition(context, n);
-            AddLeaf(cond);
-            return this;
-        }
-        public NpcBehaviorBuilder CastFilters(IEnumerable<string> skills)
-        {
-            foreach (string skill in skills)
-            {
-                Filter();
-                CanCastSkillCondition(skill);
-                CastSkillAction(skill);
-                End();
-            }
-            return this;
         }
     }
 }

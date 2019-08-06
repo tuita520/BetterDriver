@@ -13,18 +13,20 @@ namespace BetterDriver
     public interface ISchedulable
     {
         Guid ID { get; }
-        BehaviorStatus Status { get; }
+        ref readonly NodeStatus Status { get; }
         void Init(IScheduler scheduler);
-        void OnCompleted(IScheduler scheduler, BehaviorStatus status);
+        void OnCompleted(IScheduler scheduler, NodeStatus status);
         void Step(IBlackBoard bb, float dt);
-        void Abort();
-        void Clear();
     }
     public interface IScheduler
     {
         void PostSchedule(ISchedulable schedule);
-        void PostCallBack(ISchedulable schedule, Action<IScheduler, BehaviorStatus> cb);
-        void Terminate(ISchedulable schedule, BehaviorStatus status);
+        void PostCallBack(ISchedulable schedule, Action<IScheduler, NodeStatus> cb);
+        void Terminate(ISchedulable schedule, NodeStatus status);
+    }
+    public interface IBehaviorTreeBuilder
+    {
+        BehaviorTree Build();
     }
     public interface IStackable<T>
     {

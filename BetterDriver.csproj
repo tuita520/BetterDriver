@@ -61,6 +61,7 @@
     <Compile Include="ConcreteDecorators.cs" />
     <Compile Include="FakeBehaviors.cs" />
     <Compile Include="Interfaces.cs" />
+    <Compile Include="NpcBehaviorBuilder.cs" />
     <Compile Include="NpcController.cs" />
     <Compile Include="NpcBehaviors.cs" />
     <Compile Include="BehaviorBase.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="NpcDriver.cs" />
     <Compile Include="NpcHooks.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="NodeStatus.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

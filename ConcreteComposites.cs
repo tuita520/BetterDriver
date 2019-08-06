@@ -7,19 +7,18 @@ namespace BetterDriver
 {
     public class Sequence : Composite
     {
-        public override void OnCompleted(IScheduler scheduler, BehaviorStatus status)
+        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
         {
-            if (status == BehaviorStatus.SUCCESS)
+            if (status == NodeStatus.SUCCESS)
             {
                 if (++CurrentIndex >= Children.Count)
                 {
-                    scheduler.Terminate(this, BehaviorStatus.SUCCESS);
+                    scheduler.Terminate(this, NodeStatus.SUCCESS);
                 }
                 else
                 {
                     var child = Children[CurrentIndex];
                     scheduler.PostSchedule(child);
-                    scheduler.PostCallBack(child, OnCompleted);
                     child.Init(scheduler);
                 }
             }
@@ -36,9 +35,9 @@ namespace BetterDriver
     }
     public class Selector : Composite
     {
-        public override void OnCompleted(IScheduler scheduler, BehaviorStatus status)
+        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
         {
-            if (status == BehaviorStatus.SUCCESS)
+            if (status == NodeStatus.SUCCESS)
             {
                 scheduler.Terminate(this, status);
             }
@@ -46,13 +45,12 @@ namespace BetterDriver
             {
                 if (++CurrentIndex >= Children.Count)
                 {
-                    scheduler.Terminate(this, BehaviorStatus.FAILURE);
+                    scheduler.Terminate(this, NodeStatus.FAILURE);
                 }
                 else
                 {
                     var child = Children[CurrentIndex];
                     scheduler.PostSchedule(child);
-                    scheduler.PostCallBack(child, OnCompleted);
                     child.Init(scheduler);
                 }
             }

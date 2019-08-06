@@ -5,13 +5,12 @@ using System.Text;
 
 namespace BetterDriver
 {
-    public class RootDecorator : Decorator
+    public class InfiniteDecorator : Decorator
     {
-        public override void OnCompleted(IScheduler scheduler, BehaviorStatus status)
+        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
         {
             Clear();
             scheduler.PostSchedule(Child);
-            scheduler.PostCallBack(Child, OnCompleted);
             Child.Init(scheduler);
         }
     }
@@ -25,17 +24,16 @@ namespace BetterDriver
             counter = 0;
             base.Init(scheduler);
         }
-        public override void OnCompleted(IScheduler scheduler, BehaviorStatus status)
+        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
         {
-            if (status == BehaviorStatus.SUCCESS)
+            if (status == NodeStatus.SUCCESS)
             {
                 if (++counter < times)
                 {
                     scheduler.PostSchedule(Child);
-                    scheduler.PostCallBack(Child, OnCompleted);
                     Child.Init(scheduler);
                 }
-                else scheduler.Terminate(this, BehaviorStatus.SUCCESS);
+                else scheduler.Terminate(this, NodeStatus.SUCCESS);
             }
             else scheduler.Terminate(this, status);
         }
@@ -48,17 +46,21 @@ namespace BetterDriver
         public override void Step(IBlackBoard bb, float dt)
         {
             counter += dt;
-            if (counter >= duration) Abort();
-            else Status = BehaviorStatus.RUNNING;
+            if (counter >= duration)
+            {
+                status = NodeStatus.SUCCESS;
+                Child.Abort();
+            }
+            else status = NodeStatus.RUNNING;
         }
         public override void Init(IScheduler scheduler)
         {
             counter = 0f;
             base.Init(scheduler);
         }
-        public override void OnCompleted(IScheduler scheduler, BehaviorStatus status)
+        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
         {
-            Status = status;
+            scheduler.Terminate(this, status);
         }
     }
 }

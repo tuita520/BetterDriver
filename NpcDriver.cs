@@ -48,7 +48,7 @@ namespace BetterDriver
 
         public override void OnLeave(Npc t, params object[] objs)
         {
-            tree?.Leave(BehaviorStatus.SUCCESS);
+            tree?.Leave(NodeStatus.SUCCESS);
         }
 
         public override ThingStepRes OnStep(Npc t, float dt)

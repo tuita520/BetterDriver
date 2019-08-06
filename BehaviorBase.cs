@@ -5,45 +5,33 @@ using System.Text;
 
 namespace BetterDriver
 {
-    public enum BehaviorStatus
-    {
-        SUSPENDED,
-        SUCCESS,
-        FAILURE,
-        RUNNING,
-        ABORTED
-    }
     //base class.
     public abstract class Behavior : ISchedulable
     {
-        private Guid _guid = Guid.NewGuid();
-        private BehaviorStatus _status = BehaviorStatus.SUSPENDED;
-        public Guid ID
+        protected NodeStatus status = NodeStatus.SUSPENDED;
+        public ref readonly NodeStatus Status
         {
-            get { return _guid; }
+            get { return ref status; }
         }
-        public BehaviorStatus Status
-        {
-            get { return _status; }
-            protected set { if (_status != BehaviorStatus.ABORTED) _status = value; }
-        }
-        public virtual void Abort() { _status = BehaviorStatus.ABORTED; }
-        public void Clear() { _status = BehaviorStatus.SUSPENDED; }
+        public Guid ID { get; }
+        public Behavior() => ID = Guid.NewGuid();
+        public virtual void Abort() { status = NodeStatus.ABORTED; }
+        public void Clear() { status = NodeStatus.SUSPENDED; }
         public abstract void Step(IBlackBoard bb, float dt);
         public abstract void Init(IScheduler scheduler);
-        public abstract void OnCompleted(IScheduler scheduler, BehaviorStatus status);
+        public abstract void OnCompleted(IScheduler scheduler, NodeStatus status);
     }
 
     // leaf nodes.
     public abstract class Action : Behavior
     {
         public override void Init(IScheduler scheduler) { Clear(); }
-        public override void OnCompleted(IScheduler scheduler, BehaviorStatus status) { }
+        public override void OnCompleted(IScheduler scheduler, NodeStatus status) { }
     }
     public abstract class Condition : Behavior
     {
         public override void Init(IScheduler scheduler) { Clear(); }
-        public override void OnCompleted(IScheduler scheduler, BehaviorStatus status) { }
+        public override void OnCompleted(IScheduler scheduler, NodeStatus status) { }
 
     }
 
@@ -53,13 +41,12 @@ namespace BetterDriver
         protected Behavior Child;
         public void SetChild(Behavior child) { Child = child; }
         public override void Abort() { base.Abort(); Child.Abort(); }
-        public override void Step(IBlackBoard bb, float dt) { Status = BehaviorStatus.SUSPENDED; }
+        public override void Step(IBlackBoard bb, float dt) { status = NodeStatus.SUSPENDED; }
         public override void Init(IScheduler scheduler)
         {
             if (Child == null) SetChild(new FakeSuccessAction());
             Clear();
             scheduler.PostSchedule(Child);
-            scheduler.PostCallBack(Child, OnCompleted);
             Child.Init(scheduler);
         }
     }
@@ -79,7 +66,7 @@ namespace BetterDriver
                 child.Abort();
             }
         }
-        public override void Step(IBlackBoard bb, float dt) { Status = BehaviorStatus.SUSPENDED; }
+        public override void Step(IBlackBoard bb, float dt) { status = NodeStatus.SUSPENDED; }
         public override void Init(IScheduler scheduler)
         {
             CurrentIndex = 0;
@@ -87,7 +74,6 @@ namespace BetterDriver
             Clear();
             var child = Children[CurrentIndex];
             scheduler.PostSchedule(child);
-            scheduler.PostCallBack(child, OnCompleted);
             child.Init(scheduler);
         }
     }

@@ -9,48 +9,46 @@ namespace BetterDriver
     
     public class NpcCastSkillAction : Action
     {
-        private Npc caster;
         private string skill;
-        public NpcCastSkillAction(Npc t, string n) { caster = t; skill = n;  }
+        public NpcCastSkillAction(string s) => skill = s;
         public override void Step(IBlackBoard bb, float dt)
         {
+            var caster = bb.Get<Npc>("Caster");
             caster.CastSkill(skill, caster.FightBody?.Target, 0);
-            Status = BehaviorStatus.SUCCESS;
+            status = NodeStatus.SUCCESS;
         }
     }
 
     public class NpcCanCastSkillCondition : Condition
     {
-        private Npc caster;
         private string skill;
-        public NpcCanCastSkillCondition(Npc t, string n) { caster = t; skill = n; }
-
+        public NpcCanCastSkillCondition(string s) => skill = s;
         public override void Step(IBlackBoard bb, float dt)
         {
+            var caster = bb.Get<Npc>("Caster");
             if (caster?.FightBody?.Casting?.Skill != skill && caster?.FightBody?.CheckSkillCast(skill) == true)
             {
-                Status = BehaviorStatus.SUCCESS;
+                status = NodeStatus.SUCCESS;
             }
             else
             {
-                Status = BehaviorStatus.FAILURE;
+                status = NodeStatus.FAILURE;
             }
         }
     }
 
     public class NpcIsInFightCondition : Condition
     {
-        private Npc caster;
-        public NpcIsInFightCondition(Npc t) { caster = t; }
         public override void Step(IBlackBoard bb, float dt)
         {
+            var caster = bb.Get<Npc>("Caster");
             if (caster?.FightBody?.IsFighting == true)
             {
-                Status = BehaviorStatus.SUCCESS;
+                status = NodeStatus.SUCCESS;
             }
             else
             {
-                Status = BehaviorStatus.FAILURE;
+                status = NodeStatus.FAILURE;
             }
         }
     }
