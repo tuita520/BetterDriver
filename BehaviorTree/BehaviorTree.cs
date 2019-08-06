@@ -38,7 +38,7 @@ namespace BetterDriver
                 ref readonly var s = ref currentNode.Status;
                 if (s != NodeStatus.ABORTED)
                 {
-                    currentNode.Step(this, dt);
+                    currentNode.Step(dt);
                     if (s == NodeStatus.RUNNING)
                     {
                         PostSchedule(currentNode);

@@ -9,9 +9,14 @@ namespace BetterDriver
     
     public class NpcCastSkillAction : Action
     {
+        private IBlackBoard bb;
         private string skill;
-        public NpcCastSkillAction(string s) => skill = s;
-        public override void Step(IBlackBoard bb, float dt)
+        public NpcCastSkillAction(IBlackBoard blackBoard, string s)
+        {
+            bb = blackBoard ?? throw new ArgumentNullException("blackBoard");
+            skill = s;
+        }
+        public override void Step(float dt)
         {
             var caster = bb.Get<Npc>("Caster");
             caster.CastSkill(skill, caster.FightBody?.Target, 0);
@@ -21,9 +26,14 @@ namespace BetterDriver
 
     public class NpcCanCastSkillCondition : Condition
     {
+        private IBlackBoard bb;
         private string skill;
-        public NpcCanCastSkillCondition(string s) => skill = s;
-        public override void Step(IBlackBoard bb, float dt)
+        public NpcCanCastSkillCondition(IBlackBoard blackBoard, string s)
+        {
+            bb = blackBoard ?? throw new ArgumentNullException("blackBoard");
+            skill = s;
+        }
+        public override void Step(float dt)
         {
             var caster = bb.Get<Npc>("Caster");
             if (caster?.FightBody?.Casting?.Skill != skill && caster?.FightBody?.CheckSkillCast(skill) == true)
@@ -39,7 +49,12 @@ namespace BetterDriver
 
     public class NpcIsInFightCondition : Condition
     {
-        public override void Step(IBlackBoard bb, float dt)
+        private IBlackBoard bb;
+        public NpcIsInFightCondition(IBlackBoard blackBoard)
+        {
+            bb = blackBoard ?? throw new ArgumentNullException("blackBoard");
+        }
+        public override void Step(float dt)
         {
             var caster = bb.Get<Npc>("Caster");
             if (caster?.FightBody?.IsFighting == true)

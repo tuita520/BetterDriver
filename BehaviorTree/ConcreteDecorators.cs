@@ -43,7 +43,7 @@ namespace BetterDriver
         protected readonly float duration;
         protected float counter;
         public TimedDecorator(float t) => duration = t;
-        public override void Step(IBlackBoard bb, float dt)
+        public override void Step(float dt)
         {
             counter += dt;
             if (counter >= duration)

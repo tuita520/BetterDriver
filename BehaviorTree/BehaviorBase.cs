@@ -17,7 +17,7 @@ namespace BetterDriver
         public Behavior() => ID = Guid.NewGuid();
         public virtual void Abort() { status = NodeStatus.ABORTED; }
         public void Clear() { status = NodeStatus.SUSPENDED; }
-        public abstract void Step(IBlackBoard bb, float dt);
+        public abstract void Step(float dt);
         public abstract void Enter(IScheduler scheduler);
         public abstract void OnCompleted(IScheduler scheduler, NodeStatus status);
     }
@@ -41,7 +41,7 @@ namespace BetterDriver
         protected Behavior Child;
         public void SetChild(Behavior child) { Child = child; }
         public override void Abort() { base.Abort(); Child.Abort(); }
-        public override void Step(IBlackBoard bb, float dt) { status = NodeStatus.SUSPENDED; }
+        public override void Step(float dt) { status = NodeStatus.SUSPENDED; }
         public override void Enter(IScheduler scheduler)
         {
             if (Child == null) SetChild(new FakeSuccessAction());
@@ -66,7 +66,7 @@ namespace BetterDriver
                 child.Abort();
             }
         }
-        public override void Step(IBlackBoard bb, float dt) { status = NodeStatus.SUSPENDED; }
+        public override void Step(float dt) { status = NodeStatus.SUSPENDED; }
         public override void Enter(IScheduler scheduler)
         {
             CurrentIndex = 0;

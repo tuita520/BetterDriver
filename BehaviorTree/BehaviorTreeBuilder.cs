@@ -12,7 +12,7 @@ namespace BetterDriver
         public override string Message => message;
     }
 
-    public abstract class BehaviorTreeBuilder<TBuilder> : IBehaviorTreeBuilder
+    public abstract class BehaviorTreeBuilder<TBuilder>
         where TBuilder : BehaviorTreeBuilder<TBuilder>
     {
         protected class BuilderNode

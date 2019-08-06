@@ -9,19 +9,19 @@ namespace BetterDriver
         public NpcBehaviorBuilder(Npc t) { result.Post("Caster", t); }
         public NpcBehaviorBuilder IsInFightCondition()
         {
-            var cond = new NpcIsInFightCondition();
+            var cond = new NpcIsInFightCondition(result);
             AddLeaf(cond);
             return this;
         }
         public NpcBehaviorBuilder CastSkillAction(string skill)
         {
-            var act = new NpcCastSkillAction(skill);
+            var act = new NpcCastSkillAction(result, skill);
             AddLeaf(act);
             return this;
         }
         public NpcBehaviorBuilder CanCastSkillCondition(string skill)
         {
-            var cond = new NpcCanCastSkillCondition(skill);
+            var cond = new NpcCanCastSkillCondition(result, skill);
             AddLeaf(cond);
             return this;
         }
