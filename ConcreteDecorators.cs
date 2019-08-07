@@ -7,7 +7,8 @@ namespace BetterDriver
 {
     public class InfiniteDecorator : Decorator
     {
-        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
+        public InfiniteDecorator(IScheduler s) : base(s) { }
+        public override void OnChildCompleted(ISchedulable sender)
         {
             Clear();
             scheduler.PostSchedule(Child);
@@ -18,49 +19,51 @@ namespace BetterDriver
     {
         protected readonly int times;
         protected int counter;
-        public RepeatDecorator(int t) => times = t;
+        public RepeatDecorator(IScheduler s, int t) : base(s) => times = t;
         public override void Enter(IScheduler scheduler)
         {
             counter = 0;
             base.Enter(scheduler);
         }
-        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
+        public override void OnChildCompleted(ISchedulable sender)
         {
-            if (status == NodeStatus.SUCCESS)
+            Status = sender.Status;
+            if (Status == NodeStatus.SUCCESS)
             {
                 if (++counter < times)
                 {
                     scheduler.PostSchedule(Child);
                     Child.Enter(scheduler);
                 }
-                else scheduler.Terminate(this, NodeStatus.SUCCESS);
+                else scheduler.OnChildComplete(this);
             }
-            else scheduler.Terminate(this, status);
+            else scheduler.OnChildComplete(this);
         }
     }
     public class TimedDecorator : Decorator
     {
         protected readonly float duration;
         protected float counter;
-        public TimedDecorator(float t) => duration = t;
+        public TimedDecorator(IScheduler s,  float t) : base(s) => duration = t;
         public override void Step(float dt)
         {
             counter += dt;
             if (counter >= duration)
             {
-                status = NodeStatus.SUCCESS;
+                Status = NodeStatus.SUCCESS;
                 Child.Abort();
             }
-            else status = NodeStatus.RUNNING;
+            else Status = NodeStatus.RUNNING;
         }
         public override void Enter(IScheduler scheduler)
         {
             counter = 0f;
             base.Enter(scheduler);
         }
-        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
+        public override void OnChildCompleted(ISchedulable sender)
         {
-            scheduler.Terminate(this, status);
+            Status = sender.Status;
+            scheduler.OnChildComplete(this);
         }
     }
 }

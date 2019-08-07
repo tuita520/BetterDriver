@@ -5,6 +5,7 @@ using System.Text;
 
 namespace BetterDriver
 {
+    public delegate void SchedulableHandler(ISchedulable sender);
     public interface IBlackBoard
     {
         T Get<T>(string key);
@@ -14,22 +15,15 @@ namespace BetterDriver
     public interface ISchedulable
     {
         Guid ID { get; }
-        ref readonly NodeStatus Status { get; }
+        NodeStatus Status { get; }
         void Enter(IScheduler scheduler);
         void Step(float dt);
     }
     public interface IScheduler
     {
         void PostSchedule(ISchedulable schedule);
-        void Terminate(ISchedulable schedule, NodeStatus status);
-    }
-
-    public interface IObserver
-    {
-        void OnCompleted(IScheduler scheduler, NodeStatus status);
-    }
-    public interface IProvider
-    {
-        void Subscribe(ISchedulable schedule, IObserver ob);
+        void SubscribeChildComplete(ISchedulable child, SchedulableHandler cb);
+        void UnsubscribeChildComplete(ISchedulable child);
+        void OnChildComplete(ISchedulable sender);
     }
 }

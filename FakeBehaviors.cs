@@ -8,18 +8,22 @@ namespace BetterDriver
     // fake objects.
     public class FakeSuccessAction : Action
     {
-        public override void Step(float dt) { status = NodeStatus.SUCCESS; }
+        public FakeSuccessAction(IScheduler s) : base(s) { }
+        public override void Step(float dt) { Status = NodeStatus.SUCCESS; scheduler.OnChildComplete(this); }
     }
     public class FakeFailureAction : Action
     {
-        public override void Step(float dt) { status = NodeStatus.FAILURE; }
+        public FakeFailureAction(IScheduler s) : base(s) { }
+        public override void Step(float dt) { Status = NodeStatus.FAILURE; scheduler.OnChildComplete(this); }
     }
     public class AlwaysTrueCondition : Condition
     {
-        public override void Step(float dt) { status = NodeStatus.SUCCESS; }
+        public AlwaysTrueCondition(IScheduler s) : base(s) { }
+        public override void Step(float dt) { Status = NodeStatus.SUCCESS; scheduler.OnChildComplete(this); }
     }
     public class AlwaysFalseCondition : Condition
     {
-        public override void Step(float dt) { status = NodeStatus.FAILURE; }
+        public AlwaysFalseCondition(IScheduler s) : base(s) { }
+        public override void Step(float dt) { Status = NodeStatus.FAILURE; scheduler.OnChildComplete(this); }
     }
 }

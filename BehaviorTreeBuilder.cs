@@ -31,7 +31,7 @@ namespace BetterDriver
 
         public TBuilder Root()
         {
-            var root = new InfiniteDecorator();
+            var root = new InfiniteDecorator(result);
             currentNode = new BuilderNode(root);
             currentNode.Parent = null;
             result.AddBehavior(root);
@@ -40,32 +40,42 @@ namespace BetterDriver
         }
         public TBuilder Selector()
         {
-            AddBranch(new Selector());
+            AddBranch(new Selector(result));
             return BuilderInstance;
         }
         public TBuilder Sequence()
         {
-            AddBranch(new Sequence());
+            AddBranch(new Sequence(result));
             return BuilderInstance;
         }
         public TBuilder Filter()
         {
-            AddBranch(new Filter());
+            AddBranch(new Filter(result));
             return BuilderInstance;
         }
         public TBuilder Repeat(int times)
         {
-            AddBranch(new RepeatDecorator(times));
+            AddBranch(new RepeatDecorator(result, times));
             return BuilderInstance;
         }
-        public TBuilder Action(Action a)
+        public TBuilder AlwaysTrueCondition()
         {
-            AddLeaf(a);
+            Condition(new AlwaysTrueCondition(result));
             return BuilderInstance;
         }
-        public TBuilder Condition(Condition c)
+        public TBuilder AlwaysFalseCondition()
         {
-            AddLeaf(c);
+            Condition(new AlwaysFalseCondition(result));
+            return BuilderInstance;
+        }
+        public TBuilder FakeSuccessAction()
+        {
+            Action(new FakeSuccessAction(result));
+            return BuilderInstance;
+        }
+        public TBuilder FakeFailureAction()
+        {
+            Action(new FakeFailureAction(result));
             return BuilderInstance;
         }
         public TBuilder End()
@@ -80,12 +90,21 @@ namespace BetterDriver
             return BuilderInstance;
         }
 
+        protected TBuilder Action(Action a)
+        {
+            AddLeaf(a);
+            return BuilderInstance;
+        }
+        protected TBuilder Condition(Condition c)
+        {
+            AddLeaf(c);
+            return BuilderInstance;
+        }
         protected void AddBranch(Behavior e)
         {
             var newNode = new BuilderNode(e);
             newNode.Parent = currentNode;
             currentNode.Children.Add(newNode);
-            result.Subscribe(e, currentNode.behavior);
             if (currentNode.behavior is Filter fil)
             {
                 fil.AddAction(e);
@@ -111,7 +130,6 @@ namespace BetterDriver
         }
         protected void AddLeaf(Behavior e)
         {
-            result.Subscribe(e, currentNode.behavior);
             if (currentNode.behavior is Filter fil)
             {
                 if (e is Action) fil.AddAction(e);

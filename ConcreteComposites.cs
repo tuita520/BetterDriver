@@ -7,13 +7,16 @@ namespace BetterDriver
 {
     public class Sequence : Composite
     {
-        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
+        public Sequence(IScheduler s) : base(s) { }
+        public override void OnChildCompleted(ISchedulable sender)
         {
-            if (status == NodeStatus.SUCCESS)
+            var s = sender.Status;
+            if (s == NodeStatus.SUCCESS)
             {
                 if (++CurrentIndex >= Children.Count)
                 {
-                    scheduler.Terminate(this, NodeStatus.SUCCESS);
+                    Status = NodeStatus.SUCCESS;
+                    scheduler.OnChildComplete(this);
                 }
                 else
                 {
@@ -24,28 +27,34 @@ namespace BetterDriver
             }
             else
             {
-                scheduler.Terminate(this, status);
+                Status = s;
+                scheduler.OnChildComplete(this);
             }
         }
     }
     public class Filter : Sequence
     {
-        public void AddCondition(Behavior condition) { Children.Insert(0, condition); }
-        public void AddAction(Behavior action) { Children.Add(action); }
+        public Filter(IScheduler s) : base(s) { }
+        public void AddCondition(Behavior condition) { Children.Insert(0, condition); scheduler.SubscribeChildComplete(condition, OnChildCompleted); }
+        public void AddAction(Behavior action) { Children.Add(action); scheduler.SubscribeChildComplete(action, OnChildCompleted); }
     }
     public class Selector : Composite
     {
-        public override void OnCompleted(IScheduler scheduler, NodeStatus status)
+        public Selector(IScheduler s) : base(s) { }
+        public override void OnChildCompleted(ISchedulable sender)
         {
-            if (status == NodeStatus.SUCCESS)
+            var s = sender.Status;
+            if (s == NodeStatus.SUCCESS)
             {
-                scheduler.Terminate(this, status);
+                Status = s;
+                scheduler.OnChildComplete(this);
             }
             else
             {
                 if (++CurrentIndex >= Children.Count)
                 {
-                    scheduler.Terminate(this, NodeStatus.FAILURE);
+                    Status = NodeStatus.FAILURE;
+                    scheduler.OnChildComplete(this);
                 }
                 else
                 {

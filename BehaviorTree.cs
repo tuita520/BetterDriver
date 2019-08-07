@@ -10,13 +10,13 @@ namespace BetterDriver
         public static T TryGetOrDefault<T>(this Dictionary<string, object> d, string key) => d.TryGetValue(key, out var ret) ? (T)ret : default;
     }
 
-    public class BehaviorTree : IScheduler, IProvider, IBlackBoard
+    public class BehaviorTree : IScheduler, IBlackBoard
     {
         protected List<Behavior> behaviors = new List<Behavior>();
         protected Queue<ISchedulable> firstQueue = new Queue<ISchedulable>();
         protected Queue<ISchedulable> secondQueue = new Queue<ISchedulable>();
         protected bool CurrentIsFirst = true;
-        protected Dictionary<Guid, IObserver> onCompleted = new Dictionary<Guid, IObserver>();
+        protected Dictionary<Guid, SchedulableHandler> onChildCompleted = new Dictionary<Guid, SchedulableHandler>();
         protected Dictionary<string, object> blackBoard = new Dictionary<string, object>();
 
         public Behavior root;
@@ -25,8 +25,9 @@ namespace BetterDriver
 
         public void AddBehavior(Behavior b) { behaviors.Add(b); }
         public void PostSchedule(ISchedulable s) { if (CurrentIsFirst) secondQueue.Enqueue(s); else firstQueue.Enqueue(s); }
-        public void Subscribe(ISchedulable schedule, IObserver ob) { onCompleted[schedule.ID] = ob; }
-        public void Terminate(ISchedulable schedule, NodeStatus status) { onCompleted.TryGetValue(schedule.ID, out var ret); ret?.OnCompleted(this, status); }
+        public void SubscribeChildComplete(ISchedulable child, SchedulableHandler cb) { onChildCompleted[child.ID] = cb; }
+        public void UnsubscribeChildComplete(ISchedulable child) { onChildCompleted.Remove(child.ID); }
+        public void OnChildComplete(ISchedulable sender) { onChildCompleted.TryGetValue(sender.ID, out var ret); ret?.Invoke(sender); }
         public void Enter() { root.Enter(this); Step(0f); }
         public void Leave(NodeStatus status) { }
         public void Step(float dt)
@@ -35,18 +36,14 @@ namespace BetterDriver
             while (currentQueue.Count > 0)
             {
                 var currentNode = currentQueue.Dequeue();
-                ref readonly var s = ref currentNode.Status;
+                var s = currentNode.Status;
                 if (s != NodeStatus.ABORTED)
                 {
                     currentNode.Step(dt);
+                    s = currentNode.Status;
                     if (s == NodeStatus.RUNNING)
                     {
                         PostSchedule(currentNode);
-                    }
-                    else if (s == NodeStatus.SUCCESS || s == NodeStatus.FAILURE)
-                    {
-                        onCompleted.TryGetValue(currentNode.ID, out var ret);
-                        ret?.OnCompleted(this, s);
                     }
                 }
             }
