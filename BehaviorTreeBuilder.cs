@@ -126,17 +126,9 @@ namespace BetterDriver
             {
                 dec.SetChild(e);
             }
-            else if (currentNode.behavior is Selector sel)
+            else if (currentNode.behavior is Composite com)
             {
-                sel.AddChild(e);
-            }
-            else if (currentNode.behavior is Sequence seq)
-            {
-                seq.AddChild(e);
-            }
-            else if (currentNode.behavior is Parallel par)
-            {
-                par.AddChild(e);
+                com.AddChild(e);
             }
             else
             {
@@ -158,17 +150,9 @@ namespace BetterDriver
                 dec.SetChild(e);
                 End();
             }
-            else if (currentNode.behavior is Selector sel)
+            else if (currentNode.behavior is Composite com)
             {
-                sel.AddChild(e);
-            }
-            else if (currentNode.behavior is Sequence seq)
-            {
-                seq.AddChild(e);
-            }
-            else if (currentNode.behavior is Parallel par)
-            {
-                par.AddChild(e);
+                com.AddChild(e);
             }
             else
             {
