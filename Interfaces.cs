@@ -18,6 +18,7 @@ namespace BetterDriver
         NodeStatus Status { get; }
         void Enter();
         void Step(float dt);
+        void Init(); // this is the method to setup relationships.
     }
     public interface IScheduler
     {

@@ -25,7 +25,14 @@ namespace BetterDriver
         protected BehaviorTree result = new BehaviorTree();
         protected BuilderNode currentNode;
 
-        public BehaviorTree Build() { return result; }
+        public virtual BehaviorTree Build()
+        {
+            foreach (var node in result.behaviors)
+            {
+                node.Init();
+            }
+            return result;
+        }
 
         public TBuilder Root()
         {

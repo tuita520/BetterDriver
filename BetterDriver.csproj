@@ -64,6 +64,8 @@
     <Compile Include="BehaviorBase.cs" />
     <Compile Include="BehaviorTree.cs" />
     <Compile Include="BehaviorTreeBuilder.cs" />
+    <Compile Include="JsonBehaviorTreeBuilder.cs" />
+    <Compile Include="MyContractResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="NodeStatus.cs" />
   </ItemGroup>

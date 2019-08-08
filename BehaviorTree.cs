@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Newtonsoft.Json;
 
 namespace BetterDriver
 {
@@ -12,12 +11,13 @@ namespace BetterDriver
 
     public class BehaviorTree : IScheduler, IBlackBoard
     {
-        protected List<Behavior> behaviors = new List<Behavior>();
+        public List<Behavior> behaviors = new List<Behavior>();
         protected Queue<ISchedulable> firstQueue = new Queue<ISchedulable>();
         protected Queue<ISchedulable> secondQueue = new Queue<ISchedulable>();
         protected bool CurrentIsFirst = true;
-        protected Dictionary<Guid, SchedulableHandler> onChildCompleted = new Dictionary<Guid, SchedulableHandler>();
         protected Dictionary<string, object> blackBoard = new Dictionary<string, object>();
+        [JsonIgnore]
+        protected Dictionary<Guid, SchedulableHandler> onChildCompleted = new Dictionary<Guid, SchedulableHandler>();
 
         public Behavior root;
 

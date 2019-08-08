@@ -33,8 +33,8 @@ namespace BetterDriver
     public class Filter : Sequence
     {
         public Filter(IScheduler s) : base(s) { }
-        public void AddCondition(Behavior condition) { Children.Insert(0, condition); scheduler.SubscribeChildComplete(condition, OnChildCompleted); }
-        public void AddAction(Behavior action) { Children.Add(action); scheduler.SubscribeChildComplete(action, OnChildCompleted); }
+        public void AddCondition(Behavior condition) { Children.Insert(0, condition); }
+        public void AddAction(Behavior action) { Children.Add(action); }
     }
     public class Selector : Composite
     {
@@ -88,7 +88,11 @@ namespace BetterDriver
         }
         public override void Enter()
         {
-            if (Children.Count == 0) Children.Add(new FakeSuccessAction(scheduler));
+            if (Children.Count == 0)
+            {
+                Children.Add(new FakeSuccessAction(scheduler));
+                Init();
+            }
             Clear();
             foreach (var child in Children)
             {

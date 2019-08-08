@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace BetterDriver
@@ -8,6 +9,7 @@ namespace BetterDriver
     {
         protected IScheduler scheduler;
         public NodeStatus Status { get; protected set; }
+        [JsonIgnore]
         public Guid ID { get; }
 
         public Behavior(IScheduler s)
@@ -20,6 +22,7 @@ namespace BetterDriver
 
         public abstract void Step(float dt);
         public abstract void Enter();
+        public abstract void Init();
     }
 
     // leaf nodes.
@@ -27,12 +30,14 @@ namespace BetterDriver
     {
         public Action(IScheduler s) : base(s) { }
         public override void Enter() { Clear(); scheduler.PostSchedule(this); }
+
+        public override void Init() { }
     }
     public abstract class Condition : Behavior
     {
         public Condition(IScheduler s) : base(s) { }
         public override void Enter() { Clear(); scheduler.PostSchedule(this); }
-
+        public override void Init() { }
     }
 
     //branch nodes.
@@ -44,12 +49,17 @@ namespace BetterDriver
         {
         }
 
-        public void SetChild(Behavior child) { Child = child; scheduler.SubscribeChildComplete(child, OnChildCompleted); }
+        public void SetChild(Behavior child) { Child = child; }
+        public override void Init() { scheduler.SubscribeChildComplete(Child, OnChildCompleted); }
         public override void Abort() { base.Abort(); Child.Abort(); }
         public override void Step(float dt) { Status = NodeStatus.SUSPENDED; }
         public override void Enter()
         {
-            if (Child == null) SetChild(new FakeSuccessAction(scheduler));
+            if (Child == null)
+            {
+                SetChild(new FakeSuccessAction(scheduler));
+                Init();
+            }
             Clear();
             Child.Enter();
         }
@@ -65,7 +75,7 @@ namespace BetterDriver
         {
         }
 
-        public void AddChild(Behavior child) { Children.Add(child); scheduler.SubscribeChildComplete(child, OnChildCompleted); }
+        public void AddChild(Behavior child) { Children.Add(child);}
         public void RemoveChild(Behavior child) { Children.Remove(child); scheduler.UnsubscribeChildComplete(child); }
         public void ClearChildren()
         {
@@ -74,6 +84,13 @@ namespace BetterDriver
                 scheduler.UnsubscribeChildComplete(child);
             }
             Children.Clear();
+        }
+        public override void Init()
+        {
+            foreach (var child in Children)
+            {
+                scheduler.SubscribeChildComplete(child, OnChildCompleted);
+            }
         }
         public override void Abort()
         {
@@ -91,7 +108,11 @@ namespace BetterDriver
         public override void Step(float dt) { Status = NodeStatus.SUSPENDED; }
         public override void Enter()
         {
-            if (Children.Count == 0) Children.Add(new FakeSuccessAction(scheduler));
+            if (Children.Count == 0)
+            {
+                Children.Add(new FakeSuccessAction(scheduler));
+                Init();
+            }
             Clear();
             var child = Children[CurrentIndex];
             child.Enter();
