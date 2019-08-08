@@ -108,6 +108,7 @@ namespace BetterDriver
                 }
                 else
                 {
+                    failed.Remove(sender.ID);
                     succeeded.Add(sender.ID);
                     if (succeeded.Count == Children.Count)
                     {
@@ -129,6 +130,7 @@ namespace BetterDriver
                 }
                 else
                 {
+                    succeeded.Remove(sender.ID);
                     failed.Add(sender.ID);
                     if (failed.Count == Children.Count)
                     {
