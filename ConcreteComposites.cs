@@ -70,7 +70,8 @@ namespace BetterDriver
             All
         }
         protected readonly Policy successPolicy, failurePolicy;
-        protected HashSet<Guid> succeeded, failed = new HashSet<Guid>();
+        public HashSet<Guid> succeeded = new HashSet<Guid>();
+        public HashSet<Guid> failed = new HashSet<Guid>();
         protected IBlackBoard blackBoard;
         public Parallel(IScheduler s, IBlackBoard bb, Policy sucPolicy = Policy.All, Policy failPolicy = Policy.One) : base(s)
         {
@@ -102,8 +103,8 @@ namespace BetterDriver
                 if (successPolicy == Policy.One)
                 {
                     Status = NodeStatus.SUCCESS;
-                    scheduler.OnChildComplete(this);
                     AbortChildren();
+                    scheduler.OnChildComplete(this);
                 }
                 else
                 {
@@ -111,8 +112,8 @@ namespace BetterDriver
                     if (succeeded.Count == Children.Count)
                     {
                         Status = NodeStatus.SUCCESS;
-                        scheduler.OnChildComplete(this);
                         AbortChildren();
+                        scheduler.OnChildComplete(this);
                     }
                     else sender.Enter();
                 }
@@ -123,17 +124,17 @@ namespace BetterDriver
                 if (failurePolicy == Policy.One)
                 {
                     Status = NodeStatus.FAILURE;
-                    scheduler.OnChildComplete(this);
                     AbortChildren();
+                    scheduler.OnChildComplete(this);
                 }
                 else
                 {
-                    failed.Add(sender.ID); ;
+                    failed.Add(sender.ID);
                     if (failed.Count == Children.Count)
                     {
                         Status = NodeStatus.FAILURE;
-                        scheduler.OnChildComplete(this);
                         AbortChildren();
+                        scheduler.OnChildComplete(this);
                     }
                     else sender.Enter();
                 }
@@ -144,7 +145,7 @@ namespace BetterDriver
         {
             foreach (var child in Children)
             {
-                if (child.Status == NodeStatus.RUNNING) child.Abort();
+                if (child.Status == NodeStatus.RUNNING || child.Status == NodeStatus.SUSPENDED) child.Abort();
             }
         }
     }

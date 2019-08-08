@@ -134,9 +134,13 @@ namespace BetterDriver
             {
                 seq.AddChild(e);
             }
+            else if (currentNode.behavior is Parallel par)
+            {
+                par.AddChild(e);
+            }
             else
             {
-                throw new BadBuilderUseException($"Cannot add branch to node of type {e.GetType()}.");
+                throw new BadBuilderUseException($"Cannot add branch to node of type {currentNode.behavior.GetType()}.");
             }
             currentNode = newNode;
             result.AddBehavior(e);
@@ -162,9 +166,13 @@ namespace BetterDriver
             {
                 seq.AddChild(e);
             }
+            else if (currentNode.behavior is Parallel par)
+            {
+                par.AddChild(e);
+            }
             else
             {
-                throw new BadBuilderUseException($"Cannot add leaf to node of type {e.GetType()}.");
+                throw new BadBuilderUseException($"Cannot add leaf to node of type {currentNode.behavior.GetType()}.");
             }
             result.AddBehavior(e);
         }
