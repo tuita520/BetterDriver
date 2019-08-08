@@ -15,23 +15,23 @@ namespace BetterDriver
             ID = Guid.NewGuid();
             scheduler = s;
         }
-        public void Clear() { Status = NodeStatus.SUSPENDED; }
+        public virtual void Clear() { Status = NodeStatus.SUSPENDED; }
         public virtual void Abort() { Status = NodeStatus.ABORTED; }
 
         public abstract void Step(float dt);
-        public abstract void Enter(IScheduler scheduler);
+        public abstract void Enter();
     }
 
     // leaf nodes.
     public abstract class Action : Behavior
     {
         public Action(IScheduler s) : base(s) { }
-        public override void Enter(IScheduler scheduler) { Clear(); }
+        public override void Enter() { Clear(); scheduler.PostSchedule(this); }
     }
     public abstract class Condition : Behavior
     {
         public Condition(IScheduler s) : base(s) { }
-        public override void Enter(IScheduler scheduler) { Clear(); }
+        public override void Enter() { Clear(); scheduler.PostSchedule(this); }
 
     }
 
@@ -47,12 +47,11 @@ namespace BetterDriver
         public void SetChild(Behavior child) { Child = child; scheduler.SubscribeChildComplete(child, OnChildCompleted); }
         public override void Abort() { base.Abort(); Child.Abort(); }
         public override void Step(float dt) { Status = NodeStatus.SUSPENDED; }
-        public override void Enter(IScheduler scheduler)
+        public override void Enter()
         {
             if (Child == null) SetChild(new FakeSuccessAction(scheduler));
             Clear();
-            scheduler.PostSchedule(Child);
-            Child.Enter(scheduler);
+            Child.Enter();
         }
         public abstract void OnChildCompleted(ISchedulable sender);
     }
@@ -84,15 +83,18 @@ namespace BetterDriver
                 child.Abort();
             }
         }
-        public override void Step(float dt) { Status = NodeStatus.SUSPENDED; }
-        public override void Enter(IScheduler scheduler)
+        public override void Clear()
         {
             CurrentIndex = 0;
+            base.Clear();
+        }
+        public override void Step(float dt) { Status = NodeStatus.SUSPENDED; }
+        public override void Enter()
+        {
             if (Children.Count == 0) Children.Add(new FakeSuccessAction(scheduler));
             Clear();
             var child = Children[CurrentIndex];
-            scheduler.PostSchedule(child);
-            child.Enter(scheduler);
+            child.Enter();
         }
         public abstract void OnChildCompleted(ISchedulable sender);
     }

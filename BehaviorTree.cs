@@ -28,7 +28,7 @@ namespace BetterDriver
         public void SubscribeChildComplete(ISchedulable child, SchedulableHandler cb) { onChildCompleted[child.ID] = cb; }
         public void UnsubscribeChildComplete(ISchedulable child) { onChildCompleted.Remove(child.ID); }
         public void OnChildComplete(ISchedulable sender) { onChildCompleted.TryGetValue(sender.ID, out var ret); ret?.Invoke(sender); }
-        public void Enter() { root.Enter(this); Step(0f); }
+        public void Enter() { root.Enter(); Step(0f); }
         public void Leave(NodeStatus status) { }
         public void Step(float dt)
         {

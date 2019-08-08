@@ -11,8 +11,7 @@ namespace BetterDriver
         public override void OnChildCompleted(ISchedulable sender)
         {
             Clear();
-            scheduler.PostSchedule(Child);
-            Child.Enter(scheduler);
+            Child.Enter();
         }
     }
     public class RepeatDecorator : Decorator
@@ -20,10 +19,10 @@ namespace BetterDriver
         protected readonly int times;
         protected int counter;
         public RepeatDecorator(IScheduler s, int t) : base(s) => times = t;
-        public override void Enter(IScheduler scheduler)
+        public override void Enter()
         {
             counter = 0;
-            base.Enter(scheduler);
+            base.Enter();
         }
         public override void OnChildCompleted(ISchedulable sender)
         {
@@ -32,8 +31,7 @@ namespace BetterDriver
             {
                 if (++counter < times)
                 {
-                    scheduler.PostSchedule(Child);
-                    Child.Enter(scheduler);
+                    Child.Enter();
                 }
                 else scheduler.OnChildComplete(this);
             }
@@ -55,10 +53,10 @@ namespace BetterDriver
             }
             else Status = NodeStatus.RUNNING;
         }
-        public override void Enter(IScheduler scheduler)
+        public override void Enter()
         {
             counter = 0f;
-            base.Enter(scheduler);
+            base.Enter();
         }
         public override void OnChildCompleted(ISchedulable sender)
         {

@@ -16,7 +16,7 @@ namespace BetterDriver
     {
         Guid ID { get; }
         NodeStatus Status { get; }
-        void Enter(IScheduler scheduler);
+        void Enter();
         void Step(float dt);
     }
     public interface IScheduler
