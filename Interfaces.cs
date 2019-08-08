@@ -12,19 +12,20 @@ namespace BetterDriver
         void Post<T>(string key, T value);
     }
 
+    public interface IObserver
+    {
+        event SchedulableHandler Completed;
+        void OnComplete(ISchedulable sender);
+    }
     public interface ISchedulable
     {
-        Guid ID { get; }
         NodeStatus Status { get; }
         void Enter();
         void Step(float dt);
-        void Init(); // this is the method to setup relationships.
+        void Init(); // this is the method to setup callbacks.
     }
     public interface IScheduler
     {
         void PostSchedule(ISchedulable schedule);
-        void SubscribeChildComplete(ISchedulable child, SchedulableHandler cb);
-        void UnsubscribeChildComplete(ISchedulable child);
-        void OnChildComplete(ISchedulable sender);
     }
 }

@@ -6,7 +6,6 @@ namespace BetterDriver
 {
     public class Sequence : Composite
     {
-        public Sequence(IScheduler s) : base(s) { }
         public override void OnChildCompleted(ISchedulable sender)
         {
             var s = sender.Status;
@@ -15,7 +14,7 @@ namespace BetterDriver
                 if (++CurrentIndex >= Children.Count)
                 {
                     Status = NodeStatus.SUCCESS;
-                    scheduler.OnChildComplete(this);
+                    OnComplete(this);
                 }
                 else
                 {
@@ -26,33 +25,31 @@ namespace BetterDriver
             else
             {
                 Status = s;
-                scheduler.OnChildComplete(this);
+                OnComplete(this);
             }
         }
     }
     public class Filter : Sequence
     {
-        public Filter(IScheduler s) : base(s) { }
         public void AddCondition(Behavior condition) { Children.Insert(0, condition); }
         public void AddAction(Behavior action) { Children.Add(action); }
     }
     public class Selector : Composite
     {
-        public Selector(IScheduler s) : base(s) { }
         public override void OnChildCompleted(ISchedulable sender)
         {
             var s = sender.Status;
             if (s == NodeStatus.SUCCESS)
             {
                 Status = s;
-                scheduler.OnChildComplete(this);
+                OnComplete(this);
             }
             else
             {
                 if (++CurrentIndex >= Children.Count)
                 {
                     Status = NodeStatus.FAILURE;
-                    scheduler.OnChildComplete(this);
+                    OnComplete(this);
                 }
                 else
                 {
@@ -70,10 +67,10 @@ namespace BetterDriver
             All
         }
         protected readonly Policy successPolicy, failurePolicy;
-        public HashSet<Guid> succeeded = new HashSet<Guid>();
-        public HashSet<Guid> failed = new HashSet<Guid>();
+        public HashSet<ISchedulable> succeeded = new HashSet<ISchedulable>();
+        public HashSet<ISchedulable> failed = new HashSet<ISchedulable>();
         protected IBlackBoard blackBoard;
-        public Parallel(IScheduler s, IBlackBoard bb, Policy sucPolicy = Policy.All, Policy failPolicy = Policy.One) : base(s)
+        public Parallel(IBlackBoard bb, Policy sucPolicy = Policy.All, Policy failPolicy = Policy.One)
         {
             successPolicy = sucPolicy;
             failurePolicy = failPolicy;
@@ -88,11 +85,6 @@ namespace BetterDriver
         }
         public override void Enter()
         {
-            if (Children.Count == 0)
-            {
-                Children.Add(new FakeSuccessAction(scheduler));
-                Init();
-            }
             Clear();
             foreach (var child in Children)
             {
@@ -108,17 +100,17 @@ namespace BetterDriver
                 {
                     Status = NodeStatus.SUCCESS;
                     AbortChildren();
-                    scheduler.OnChildComplete(this);
+                    OnComplete(this);
                 }
                 else
                 {
-                    failed.Remove(sender.ID);
-                    succeeded.Add(sender.ID);
+                    failed.Remove(sender);
+                    succeeded.Add(sender);
                     if (succeeded.Count == Children.Count)
                     {
                         Status = NodeStatus.SUCCESS;
                         AbortChildren();
-                        scheduler.OnChildComplete(this);
+                        OnComplete(this);
                     }
                     else sender.Enter();
                 }
@@ -130,17 +122,17 @@ namespace BetterDriver
                 {
                     Status = NodeStatus.FAILURE;
                     AbortChildren();
-                    scheduler.OnChildComplete(this);
+                    OnComplete(this);
                 }
                 else
                 {
-                    succeeded.Remove(sender.ID);
-                    failed.Add(sender.ID);
+                    succeeded.Remove(sender);
+                    failed.Add(sender);
                     if (failed.Count == Children.Count)
                     {
                         Status = NodeStatus.FAILURE;
                         AbortChildren();
-                        scheduler.OnChildComplete(this);
+                        OnComplete(this);
                     }
                     else sender.Enter();
                 }

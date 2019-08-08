@@ -36,7 +36,7 @@ namespace BetterDriver
 
         public TBuilder Root()
         {
-            var root = new InfiniteDecorator(result);
+            var root = new InfiniteDecorator();
             currentNode = new BuilderNode(root);
             currentNode.Parent = null;
             result.AddBehavior(root);
@@ -45,22 +45,22 @@ namespace BetterDriver
         }
         public TBuilder Selector()
         {
-            AddBranch(new Selector(result));
+            AddBranch(new Selector());
             return BuilderInstance;
         }
         public TBuilder Sequence()
         {
-            AddBranch(new Sequence(result));
+            AddBranch(new Sequence());
             return BuilderInstance;
         }
         public TBuilder Filter()
         {
-            AddBranch(new Filter(result));
+            AddBranch(new Filter());
             return BuilderInstance;
         }
         public TBuilder Repeat(int times)
         {
-            AddBranch(new RepeatDecorator(result, times));
+            AddBranch(new RepeatDecorator(times));
             return BuilderInstance;
         }
         public TBuilder AlwaysTrueCondition()
@@ -85,17 +85,17 @@ namespace BetterDriver
         }
         public TBuilder OneFailParallel()
         {
-            AddBranch(new Parallel(result, result));
+            AddBranch(new Parallel(result));
             return BuilderInstance;
         }
         public TBuilder OneSuccessParallel()
         {
-            AddBranch(new Parallel(result, result,Parallel.Policy.One, Parallel.Policy.All));
+            AddBranch(new Parallel(result,Parallel.Policy.One, Parallel.Policy.All));
             return BuilderInstance;
         }
         public TBuilder Monitor()
         {
-            AddBranch(new Parallel(result, result, Parallel.Policy.All, Parallel.Policy.All));
+            AddBranch(new Parallel(result, Parallel.Policy.All, Parallel.Policy.All));
             return BuilderInstance;
         }
         public TBuilder End()

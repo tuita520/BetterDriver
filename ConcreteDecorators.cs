@@ -7,7 +7,6 @@ namespace BetterDriver
 {
     public class InfiniteDecorator : Decorator
     {
-        public InfiniteDecorator(IScheduler s) : base(s) { }
         public override void OnChildCompleted(ISchedulable sender)
         {
             Clear();
@@ -16,30 +15,28 @@ namespace BetterDriver
     }
     public class IgnoreFailureDecorator : Decorator
     {
-        public IgnoreFailureDecorator(IScheduler s) : base(s) { }
         public override void OnChildCompleted(ISchedulable sender)
         {
             Status = NodeStatus.SUCCESS;
-            scheduler.OnChildComplete(this);
+            OnComplete(this);
         }
     }
     public class InvertDecorator : Decorator
     {
-        public InvertDecorator(IScheduler s) : base(s) { }
 
         public override void OnChildCompleted(ISchedulable sender)
         {
             var s = sender.Status;
             if (s == NodeStatus.SUCCESS) Status = NodeStatus.FAILURE;
             else Status = NodeStatus.SUCCESS;
-            scheduler.OnChildComplete(this);
+            OnComplete(this);
         }
     }
     public class RepeatDecorator : Decorator
     {
         protected readonly int times;
         protected int counter;
-        public RepeatDecorator(IScheduler s, int t) : base(s) => times = t;
+        public RepeatDecorator(int t) => times = t;
         public override void Enter()
         {
             counter = 0;
@@ -54,16 +51,16 @@ namespace BetterDriver
                 {
                     Child.Enter();
                 }
-                else scheduler.OnChildComplete(this);
+                else OnComplete(this);
             }
-            else scheduler.OnChildComplete(this);
+            else OnComplete(this);
         }
     }
     public class TimedDecorator : Decorator
     {
         protected readonly float duration;
         protected float counter;
-        public TimedDecorator(IScheduler s,  float t) : base(s) => duration = t;
+        public TimedDecorator(float t) => duration = t;
         public override void Step(float dt)
         {
             counter += dt;
@@ -82,7 +79,7 @@ namespace BetterDriver
         public override void OnChildCompleted(ISchedulable sender)
         {
             Status = sender.Status;
-            scheduler.OnChildComplete(this);
+            OnComplete(this);
         }
     }
 }

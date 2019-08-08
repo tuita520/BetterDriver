@@ -11,23 +11,18 @@ namespace BetterDriver
 
     public class BehaviorTree : IScheduler, IBlackBoard
     {
-        public List<Behavior> behaviors = new List<Behavior>();
         protected Queue<ISchedulable> firstQueue = new Queue<ISchedulable>();
         protected Queue<ISchedulable> secondQueue = new Queue<ISchedulable>();
         protected bool CurrentIsFirst = true;
         protected Dictionary<string, object> blackBoard = new Dictionary<string, object>();
-        [JsonIgnore]
-        protected Dictionary<Guid, SchedulableHandler> onChildCompleted = new Dictionary<Guid, SchedulableHandler>();
 
+        public List<Behavior> behaviors = new List<Behavior>();
         public Behavior root;
 
         private ref Queue<ISchedulable> getCurrentQueue() { if (CurrentIsFirst) return ref firstQueue; else return ref secondQueue; }
 
         public void AddBehavior(Behavior b) { behaviors.Add(b); }
         public void PostSchedule(ISchedulable s) { if (CurrentIsFirst) secondQueue.Enqueue(s); else firstQueue.Enqueue(s); }
-        public void SubscribeChildComplete(ISchedulable child, SchedulableHandler cb) { onChildCompleted[child.ID] = cb; }
-        public void UnsubscribeChildComplete(ISchedulable child) { onChildCompleted.Remove(child.ID); }
-        public void OnChildComplete(ISchedulable sender) { onChildCompleted.TryGetValue(sender.ID, out var ret); ret?.Invoke(sender); }
         public void Enter() { root.Enter(); Step(0f); }
         public void Leave(NodeStatus status) { }
         public void Step(float dt)
