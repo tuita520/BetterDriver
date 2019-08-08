@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿
 namespace BetterDriver
 {
     public delegate void SchedulableHandler(ISchedulable sender);
@@ -27,5 +23,10 @@ namespace BetterDriver
     public interface IScheduler
     {
         void PostSchedule(ISchedulable schedule);
+    }
+    public interface IUtilized
+    {
+        float Utility { get; }
+        void CalculateUtility();
     }
 }

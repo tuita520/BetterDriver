@@ -4,65 +4,11 @@ using System.Linq;
 
 namespace BetterDriver
 {
-    public class Sequence : Composite
-    {
-        public override void OnChildCompleted(ISchedulable sender)
-        {
-            var s = sender.Status;
-            if (s == NodeStatus.SUCCESS)
-            {
-                if (++CurrentIndex >= Children.Count)
-                {
-                    Status = NodeStatus.SUCCESS;
-                    OnComplete(this);
-                }
-                else
-                {
-                    var child = Children[CurrentIndex];
-                    child.Enter();
-                }
-            }
-            else
-            {
-                Status = s;
-                OnComplete(this);
-            }
-        }
-    }
-    public class Filter : Sequence
-    {
-        public void AddCondition(Behavior condition) { Children.Insert(0, condition); }
-        public void AddAction(Behavior action) { Children.Add(action); }
-    }
-    public class Selector : Composite
-    {
-        public override void OnChildCompleted(ISchedulable sender)
-        {
-            var s = sender.Status;
-            if (s == NodeStatus.SUCCESS)
-            {
-                Status = s;
-                OnComplete(this);
-            }
-            else
-            {
-                if (++CurrentIndex >= Children.Count)
-                {
-                    Status = NodeStatus.FAILURE;
-                    OnComplete(this);
-                }
-                else
-                {
-                    var child = Children[CurrentIndex];
-                    child.Enter();
-                }
-            }
-        }
-    }
     public class Parallel : Composite
     {
         public enum Policy
         {
+            Ignore,
             One,
             All
         }
@@ -70,7 +16,7 @@ namespace BetterDriver
         public HashSet<ISchedulable> succeeded = new HashSet<ISchedulable>();
         public HashSet<ISchedulable> failed = new HashSet<ISchedulable>();
         protected IBlackBoard blackBoard;
-        public Parallel(IBlackBoard bb, Policy sucPolicy = Policy.All, Policy failPolicy = Policy.One)
+        public Parallel(IBlackBoard bb, Policy sucPolicy = Policy.Ignore, Policy failPolicy = Policy.One)
         {
             successPolicy = sucPolicy;
             failurePolicy = failPolicy;
@@ -102,7 +48,7 @@ namespace BetterDriver
                     AbortChildren();
                     OnComplete(this);
                 }
-                else
+                else if (successPolicy == Policy.All)
                 {
                     failed.Remove(sender);
                     succeeded.Add(sender);
@@ -124,7 +70,7 @@ namespace BetterDriver
                     AbortChildren();
                     OnComplete(this);
                 }
-                else
+                else if (failurePolicy == Policy.All)
                 {
                     succeeded.Remove(sender);
                     failed.Add(sender);

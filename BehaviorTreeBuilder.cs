@@ -90,7 +90,7 @@ namespace BetterDriver
         }
         public TBuilder OneSuccessParallel()
         {
-            AddBranch(new Parallel(result,Parallel.Policy.One, Parallel.Policy.All));
+            AddBranch(new Parallel(result,Parallel.Policy.One, Parallel.Policy.Ignore));
             return BuilderInstance;
         }
         public TBuilder Monitor()
