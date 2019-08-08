@@ -70,7 +70,7 @@ namespace BetterDriver
             All
         }
         protected readonly Policy successPolicy, failurePolicy;
-        protected int successCount, failureCount = 0;
+        protected HashSet<Guid> succeeded, failed = new HashSet<Guid>();
         protected IBlackBoard blackBoard;
         public Parallel(IScheduler s, IBlackBoard bb, Policy sucPolicy = Policy.All, Policy failPolicy = Policy.One) : base(s)
         {
@@ -81,58 +81,61 @@ namespace BetterDriver
 
         public override void Clear()
         {
-            successCount = 0;
-            failureCount = 0;
-            if (successPolicy == Policy.All && failurePolicy == Policy.All) Status = NodeStatus.RUNNING;
-            else Status = NodeStatus.SUSPENDED;
+            succeeded.Clear();
+            failed.Clear();
+            base.Clear();
         }
         public override void Enter()
         {
             if (Children.Count == 0) Children.Add(new FakeSuccessAction(scheduler));
             Clear();
-            if (successPolicy == Policy.All && failurePolicy == Policy.All) scheduler.PostSchedule(this);
             foreach (var child in Children)
             {
                 child.Enter();
             }
         }
-        public override void Step(float dt)
-        {
-            Clear();
-        }
         public override void OnChildCompleted(ISchedulable sender)
         {
             var s = sender.Status;
-            if (s == NodeStatus.SUCCESS && successPolicy == Policy.One)
+            if (s == NodeStatus.SUCCESS)
             {
-                Status = NodeStatus.SUCCESS;
-                scheduler.OnChildComplete(this);
-                AbortChildren();
+                if (successPolicy == Policy.One)
+                {
+                    Status = NodeStatus.SUCCESS;
+                    scheduler.OnChildComplete(this);
+                    AbortChildren();
+                }
+                else
+                {
+                    succeeded.Add(sender.ID);
+                    if (succeeded.Count == Children.Count)
+                    {
+                        Status = NodeStatus.SUCCESS;
+                        scheduler.OnChildComplete(this);
+                        AbortChildren();
+                    }
+                    else sender.Enter();
+                }
+                
             }
-            else if (s == NodeStatus.FAILURE && failurePolicy == Policy.One)
+            else if (s == NodeStatus.FAILURE)
             {
-                Status = NodeStatus.FAILURE;
-                scheduler.OnChildComplete(this);
-                AbortChildren();
-            }
-            if (failurePolicy == Policy.All && s == NodeStatus.FAILURE)
-            {
-                ++failureCount;
-                if (failureCount == Children.Count)
+                if (failurePolicy == Policy.One)
                 {
                     Status = NodeStatus.FAILURE;
                     scheduler.OnChildComplete(this);
                     AbortChildren();
                 }
-            }
-            else if (successPolicy == Policy.All && s == NodeStatus.SUCCESS)
-            {
-                ++successCount;
-                if (successCount == Children.Count)
+                else
                 {
-                    Status = NodeStatus.SUCCESS;
-                    scheduler.OnChildComplete(this);
-                    AbortChildren();
+                    failed.Add(sender.ID); ;
+                    if (failed.Count == Children.Count)
+                    {
+                        Status = NodeStatus.FAILURE;
+                        scheduler.OnChildComplete(this);
+                        AbortChildren();
+                    }
+                    else sender.Enter();
                 }
             }
         }

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace BetterDriver
 {
@@ -76,6 +74,21 @@ namespace BetterDriver
         public TBuilder FakeFailureAction()
         {
             Action(new FakeFailureAction(result));
+            return BuilderInstance;
+        }
+        public TBuilder OneFailParallel()
+        {
+            AddBranch(new Parallel(result, result));
+            return BuilderInstance;
+        }
+        public TBuilder OneSuccessParallel()
+        {
+            AddBranch(new Parallel(result, result,Parallel.Policy.One, Parallel.Policy.All));
+            return BuilderInstance;
+        }
+        public TBuilder Monitor()
+        {
+            AddBranch(new Parallel(result, result, Parallel.Policy.All, Parallel.Policy.All));
             return BuilderInstance;
         }
         public TBuilder End()

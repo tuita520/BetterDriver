@@ -14,6 +14,27 @@ namespace BetterDriver
             Child.Enter();
         }
     }
+    public class IgnoreFailureDecorator : Decorator
+    {
+        public IgnoreFailureDecorator(IScheduler s) : base(s) { }
+        public override void OnChildCompleted(ISchedulable sender)
+        {
+            Status = NodeStatus.SUCCESS;
+            scheduler.OnChildComplete(this);
+        }
+    }
+    public class InvertDecorator : Decorator
+    {
+        public InvertDecorator(IScheduler s) : base(s) { }
+
+        public override void OnChildCompleted(ISchedulable sender)
+        {
+            var s = sender.Status;
+            if (s == NodeStatus.SUCCESS) Status = NodeStatus.FAILURE;
+            else Status = NodeStatus.SUCCESS;
+            scheduler.OnChildComplete(this);
+        }
+    }
     public class RepeatDecorator : Decorator
     {
         protected readonly int times;
